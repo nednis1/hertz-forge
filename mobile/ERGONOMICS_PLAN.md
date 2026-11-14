@@ -283,7 +283,9 @@ step; DSP, row model and `.hfc` format are out of scope.
       set before the WebView is created; cold-start rendering not observable
       without a device).
 - [x] Keyboard never covers the focused field; dock behaviour is predictable.
-- [x] Offline reload works after the cache bump (`hertz-forge-v6`).
+- [x] Offline reload works after the cache bump (`hertz-forge-v7`; verified by
+      stopping the dev server and reloading — the shell, scripts and worklet all
+      come from the cache).
 - [x] README reflects the shipped behaviour.
 
 ---
@@ -487,7 +489,10 @@ minimum target sizes at the listed viewports.
   `prefers-reduced-motion` was already honoured; no change. Manifest shortcuts
   were not added — they need a route that starts playback, which is a bigger
   change than a device-polish pass.
-- **Delivery (6.5).** `CACHE` bumped to `hertz-forge-v6`, README updated, APK
+- **Delivery (6.5).** `CACHE` bumped to `hertz-forge-v7` (v6 shipped first, then
+  a precache gap was found: `js/processor.js` — needed to build the AudioWorklet
+  — was only cached after a successful online play, so a first play offline had
+  no worklet. It is now precached), README updated, APK
   rebuilt with build-tools 35 (34's bundled R8 crashes on JDK 21 class files)
   and verified with `apksigner`.
 - **Verified:** `node --check` on every mobile script; no `▶ ■ ⋯ ＋ ⏮ ⏭ ❚❚`
