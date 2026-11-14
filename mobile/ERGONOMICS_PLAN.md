@@ -495,6 +495,16 @@ minimum target sizes at the listed viewports.
   no worklet. It is now precached), README updated, APK
   rebuilt with build-tools 35 (34's bundled R8 crashes on JDK 21 class files)
   and verified with `apksigner`.
+- **Typed values (follow-up).** Every slider readout is now an editable number
+  input instead of a static `<output>`, so exact values can be entered rather
+  than dragged. `rangeField` renders the twin with the same `data-scope`,
+  `data-field`, `data-side`, `data-pi` and `data-ri` plus `data-num`;
+  `selectorForEl` adds `[data-num]` for the box and `:not([data-num])` for the
+  slider, so focus and caret restore stay unambiguous. `refreshRowInputs` skips
+  the focused control so a re-sync cannot eat keystrokes, and `syncFieldTwin`
+  keeps slider and box in step both ways. A slider whose step is 1 shows the
+  snapped thumb (7.83 → 8) while the model keeps the typed value; master volume
+  in the dock popover is editable for the same reason.
 - **Verified:** `node --check` on every mobile script; no `▶ ■ ⋯ ＋ ⏮ ⏭ ❚❚`
   glyphs remain in the app shell or renderer; Chrome emulation at 320, 360, 393
   and 412px shows no horizontal overflow and the dock/action icons render from

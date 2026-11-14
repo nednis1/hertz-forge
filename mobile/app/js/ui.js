@@ -129,12 +129,17 @@
       '" data-field="' + field + '"' + (side ? ' data-side="' + side + '"' : '');
   }
 
+  /* Slider plus a typed twin. The number beside the label is a real input, so
+     exact values can be entered instead of dragged out of a 0-2000 range. */
   function rangeField(pi, ri, scope, field, side, value, min, max, step, unit, label) {
     var v = +value;
-    var s = parseFloat(step) || 1;
-    var txt = (s < 1 ? v.toFixed(1) : String(Math.round(v))) + (unit ? ' ' + unit : '');
+    var shown = String(Math.round(v * 100) / 100);
     return '<label class="field"><span class="lab-row"><span class="lab">' + label + '</span>' +
-      '<output>' + txt + '</output></span>' +
+      '<span class="num-wrap"><input class="num num-inline" type="number" data-num="1"' +
+        ' inputmode="decimal" enterkeyhint="done" aria-label="' + label + ' value"' +
+        ' min="' + min + '" max="' + max + '" step="' + step + '" value="' + shown + '"' +
+        ' data-unit="' + (unit || '') + '" ' + ctlAttrs(pi, ri, scope, field, side) + '>' +
+        (unit ? '<em class="unit">' + unit + '</em>' : '') + '</span></span>' +
       '<input type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + v +
       '" data-unit="' + (unit || '') + '" ' + ctlAttrs(pi, ri, scope, field, side) + '>' +
       '</label>';
@@ -408,6 +413,9 @@
     if (ds.act) parts.push('[data-act="' + ds.act + '"]');
     if (ds.scope) parts.push('[data-scope="' + ds.scope + '"]');
     if (ds.field) parts.push('[data-field="' + ds.field + '"]');
+    /* A field has two controls (slider and typed twin); keep them distinct. */
+    if (ds.num) parts.push('[data-num]');
+    else if (ds.scope) parts.push(':not([data-num])');
     if (ds.side) parts.push('[data-side="' + ds.side + '"]');
     if (ds.mode) parts.push('[data-mode="' + ds.mode + '"]');
     if (ds.pi != null) parts.push('[data-pi="' + ds.pi + '"]');
@@ -460,7 +468,9 @@
     setToggle(els.chainLoop, state.chain.loop);
     setToggle(els.chainShuffle, state.chain.shuffle);
     els.vol.value = state.masterVol;
-    els.volOut.textContent = Math.round(state.masterVol) + '%';
+    if (els.volNum && els.volNum !== document.activeElement) {
+      els.volNum.value = Math.round(state.masterVol);
+    }
     els.volLabel.textContent = Math.round(state.masterVol) + '%';
     els.prev.disabled = !canStep(-1);
     els.next.disabled = !canStep(1);
@@ -543,13 +553,17 @@
     vol: 'vol', bi: 'bi_val', fm: 'fm_on'
   };
 
-  function updateOut(inp) {
-    var out = inp.parentNode && inp.parentNode.querySelector('output');
-    if (!out) return;
-    var step = parseFloat(inp.step) || 1;
-    var v = parseFloat(inp.value);
-    var unit = inp.dataset.unit || '';
-    out.textContent = (step < 1 ? v.toFixed(1) : String(Math.round(v))) + (unit ? ' ' + unit : '');
+  /* Keeps a slider and its typed twin showing the same value. */
+  function syncFieldTwin(inp) {
+    var wrap = inp.closest ? inp.closest('label.field') : null;
+    if (!wrap) return;
+    var range = wrap.querySelector('input[type="range"]');
+    var num = wrap.querySelector('input[data-num]');
+    if (!range || !num) return;
+    var target = inp === num ? range : num;
+    if (target === document.activeElement) return;
+    if (inp === num && num.value === '') return;
+    target.value = inp.value;
   }
 
   function refreshRowInputs(pi, ri) {
@@ -560,6 +574,8 @@
     var inputs = rowEl.querySelectorAll('[data-scope]');
     for (var i = 0; i < inputs.length; i++) {
       var inp = inputs[i];
+      /* Never rewrite the control the user is typing into. */
+      if (inp === document.activeElement) continue;
       var scope = inp.dataset.scope;
       var f = inp.dataset.field;
       var side = inp.dataset.side;
@@ -582,7 +598,6 @@
 
       if (inp.type === 'checkbox') inp.checked = !!v;
       else inp.value = v;
-      if (inp.type === 'range') updateOut(inp);
     }
 
     var cl = rowEl.querySelector('[data-comp="bin-l"]');
@@ -709,7 +724,7 @@
         return;
       }
 
-      if (t.type === 'range') updateOut(t);
+      syncFieldTwin(t);
       if (row.sync_on) {
         mirrorChannel(row, side);
         refreshRowInputs(pi, ri);
@@ -1483,9 +1498,13 @@
     performAction(act, pi, ri, btn);
   }
 
-  function onVolume() {
-    state.masterVol = clampNum(+els.vol.value, 0, 100);
-    els.volOut.textContent = Math.round(state.masterVol) + '%';
+  function onVolume(e) {
+    var typed = !!(e && e.target === els.volNum);
+    var src = typed ? els.volNum : els.vol;
+    if (src.value === '') return;
+    state.masterVol = clampNum(+src.value, 0, 100);
+    if (typed) els.vol.value = state.masterVol;
+    else els.volNum.value = Math.round(state.masterVol);
     els.volLabel.textContent = Math.round(state.masterVol) + '%';
     player.setVolume(state.masterVol / 100);
     saveSoon();
@@ -1513,6 +1532,7 @@
     els.list.addEventListener('click', onClick);
 
     els.vol.addEventListener('input', onVolume);
+    els.volNum.addEventListener('input', onVolume);
     els.dockPlay.addEventListener('click', onDockPrimary);
     els.stop.addEventListener('click', function () {
       buzz(8);
@@ -1621,7 +1641,7 @@
     els.prev = $('btnPrev');
     els.next = $('btnNext');
     els.vol = $('vol');
-    els.volOut = $('volOut');
+    els.volNum = $('volNum');
     els.volLabel = $('volLabel');
     els.volBtn = $('btnVol');
     els.volPop = $('volPop');

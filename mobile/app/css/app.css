@@ -249,9 +249,15 @@ button, .check-wrap, .seg-btn, .dock-btn, .icon { touch-action: manipulation; }
   display: block; font-size: 11px; letter-spacing: 0.05em;
   text-transform: uppercase; color: var(--label);
 }
-.lab-row output {
-  font-size: 12px; color: var(--fg); font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+.num-wrap { display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto; }
+.num-inline {
+  width: 84px; min-height: var(--tap); padding: 2px 6px; text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.num-inline::-webkit-outer-spin-button,
+.num-inline::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.num-wrap .unit {
+  font-size: 11px; font-style: normal; color: var(--label); min-width: 14px;
 }
 .ctl { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .ctl output { font-size: 12px; color: var(--fg); font-variant-numeric: tabular-nums; }
@@ -339,7 +345,7 @@ select {
 }
 .vol-pop label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--label); }
 .vol-pop input { flex: 1; }
-.vol-pop output { min-width: 44px; text-align: right; font-size: 13px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.vol-pop .num { width: 68px; text-align: right; }
 
 /* ── action sheets ── */
 body.sheet-open { overflow: hidden; }

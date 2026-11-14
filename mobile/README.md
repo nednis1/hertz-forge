@@ -54,6 +54,12 @@ without browser chrome, keeps its own icon, and works offline after the first lo
   prev/next, volume, import, add, more, the chevrons and the sheet actions look
   the same on Android, iOS and desktop instead of falling back to platform
   emoji. `loop` and `shuffle` stay as labelled text toggles.
+- **Every value can be typed.** Each slider carries an editable box beside its
+  label: tap the number, enter an exact figure (`7.83` Hz, `432` Hz, `30`%) and
+  the slider follows. Dragging the slider updates the box, so neither control is
+  one-way. This covers carrier, BW, amp and volume per ear, the binaural centre
+  and beat, the advanced FM range, row duration, the playlist row limit and
+  master volume.
 - Name and number fields move above the dock when focused, and **Enter**
   dismisses the keyboard. The dock stays above the keyboard rather than hiding
   (the viewport uses `interactive-widget=resizes-content`).
