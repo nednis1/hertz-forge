@@ -245,7 +245,7 @@
       ' aria-label="Include row"></label>';
     var caret = '<span class="caret" aria-hidden="true">' + (row.collapsed ? '▸' : '▾') + '</span>';
     var more = '<button class="icon" type="button" data-act="row-more" ' + d +
-      ' aria-label="Row actions" aria-expanded="false">⋯</button>';
+      ' aria-label="Row actions" aria-haspopup="dialog">⋯</button>';
 
     if (row.collapsed) {
       return '<article class="row collapsed' + (active ? ' active' : '') + '" ' + d + '>' +
@@ -265,15 +265,7 @@
           fmtTime(active ? 0 : row.duration) + '</span>' +
         more +
       '</div>' +
-      '<div class="row-body">' + rowBodyHTML(pi, ri, row) +
-        '<div class="row-actions" hidden>' +
-          '<button class="btn small" type="button" data-act="row-dup" ' + d + '>Duplicate</button>' +
-          '<button class="btn small" type="button" data-act="row-up" ' + d + '>↑ Up</button>' +
-          '<button class="btn small" type="button" data-act="row-down" ' + d + '>↓ Down</button>' +
-          '<button class="btn small" type="button" data-act="row-save" ' + d + '>Save .hfc</button>' +
-          '<button class="btn small danger" type="button" data-act="row-del" ' + d + '>Delete</button>' +
-        '</div>' +
-      '</div>' +
+      '<div class="row-body">' + rowBodyHTML(pi, ri, row) + '</div>' +
     '</article>';
   }
 
@@ -296,7 +288,7 @@
           ' aria-label="' + (playing ? 'Stop playlist' : 'Play playlist') + '">' +
           (playing ? '■' : '▶') + '</button>' +
         '<button class="icon" type="button" data-act="pl-more" ' + d +
-          ' aria-label="Playlist actions" aria-expanded="false">⋯</button>' +
+          ' aria-label="Playlist actions" aria-haspopup="dialog">⋯</button>' +
       '</div>' +
       '<div class="pl-meta">' +
         '<label class="chk"><input type="checkbox" ' + ctlAttrs(pi, 0, 'pl', 'loop') +
@@ -307,12 +299,6 @@
           (pl.play_rows | 0) + '" ' + ctlAttrs(pi, 0, 'pl', 'playrows') + '></label>' +
       '</div>' +
       (pl.collapsed ? '' :
-        '<div class="pl-more" hidden>' +
-          '<button class="btn small" type="button" data-act="pl-wav" ' + d + '>Export WAV</button>' +
-          '<button class="btn small" type="button" data-act="pl-dup" ' + d + '>Duplicate</button>' +
-          '<button class="btn small" type="button" data-act="pl-load" ' + d + '>Load .hfc</button>' +
-          '<button class="btn small danger" type="button" data-act="pl-del" ' + d + '>Delete</button>' +
-        '</div>' +
         '<div class="rows">' + pl.rows.map(function (r, ri) {
           return rowHTML(pi, ri, r);
         }).join('') + '</div>' +
@@ -663,11 +649,245 @@
     }
   }
 
-  /* ── structural actions ──────────────────────────────────── */
+  /* ── bottom sheets ───────────────────────────────────────── */
 
-  function togglePanel(el) {
-    if (el) el.hidden = !el.hidden;
+  var sheetState = {
+    open: false,
+    opener: null,
+    kind: null,
+    pi: -1,
+    ri: -1,
+    onConfirm: null
+  };
+
+  function buzz(ms) {
+    if (!navigator.vibrate) return;
+    try {
+      navigator.vibrate(ms || 8);
+    } catch (e) {
+      /* vibration is optional */
+    }
   }
+
+  function sheetAction(act, label, cls, disabled) {
+    return '<button class="btn sheet-btn' + (cls ? ' ' + cls : '') + '" type="button" ' +
+      'data-sheet-act="' + act + '"' + (disabled ? ' disabled' : '') + '>' + label + '</button>';
+  }
+
+  function openSheet(kind, pi, ri, opener) {
+    var pl = state.playlists[pi];
+    if (!pl) return;
+    if (kind === 'row' && !pl.rows[ri]) return;
+
+    sheetState.kind = kind;
+    sheetState.pi = pi;
+    sheetState.ri = ri;
+    sheetState.onConfirm = null;
+
+    var title;
+    var sub;
+    var actions;
+
+    if (kind === 'pl') {
+      title = pl.name || ('Playlist ' + (pi + 1));
+      sub = pl.rows.length + (pl.rows.length === 1 ? ' row' : ' rows') +
+        ' · ' + fmtTime(M.playbackDuration(pl));
+      actions =
+        sheetAction('pl-wav', 'Export WAV') +
+        sheetAction('pl-dup', 'Duplicate playlist') +
+        sheetAction('pl-load', 'Load .hfc into this playlist') +
+        '<div class="sheet-sep" aria-hidden="true"></div>' +
+        sheetAction('pl-del', 'Delete playlist', 'danger');
+    } else {
+      var row = pl.rows[ri];
+      title = row.name || ('Row ' + (ri + 1));
+      sub = rowSummary(row) + ' · ' + fmtTime(row.duration);
+      actions =
+        sheetAction('row-dup', 'Duplicate row') +
+        sheetAction('row-up', 'Move up', '', ri === 0) +
+        sheetAction('row-down', 'Move down', '', ri === pl.rows.length - 1) +
+        sheetAction('row-save', 'Save .hfc') +
+        '<div class="sheet-sep" aria-hidden="true"></div>' +
+        sheetAction('row-del', 'Delete row', 'danger');
+    }
+
+    buzz(6);
+    showSheet({ title: title, sub: sub, actions: actions, opener: opener });
+  }
+
+  function showSheet(cfg) {
+    if (cfg.opener) sheetState.opener = cfg.opener;
+    else if (!sheetState.open) sheetState.opener = document.activeElement;
+
+    els.sheetTitle.textContent = cfg.title || '';
+    els.sheetSub.textContent = cfg.sub || '';
+    els.sheetSub.hidden = !cfg.sub;
+    els.sheetCancel.textContent = cfg.message ? 'Keep it' : 'Cancel';
+
+    if (cfg.message) {
+      els.sheetActions.innerHTML = '<p class="sheet-msg">' + esc(cfg.message) + '</p>' +
+        '<button class="btn sheet-btn danger" type="button" data-sheet-confirm>' +
+        esc(cfg.confirmLabel || 'Delete') + '</button>';
+      sheetState.onConfirm = cfg.onConfirm || null;
+    } else {
+      els.sheetActions.innerHTML = cfg.actions || '';
+      sheetState.onConfirm = null;
+    }
+
+    els.sheetWrap.hidden = false;
+    document.body.classList.add('sheet-open');
+    sheetState.open = true;
+
+    /* Confirmations focus the safe choice; action sheets focus the first action. */
+    var target = cfg.message
+      ? els.sheetCancel
+      : els.sheetActions.querySelector('button:not([disabled])');
+    if (target) {
+      try {
+        target.focus({ preventScroll: true });
+      } catch (e) {
+        target.focus();
+      }
+    }
+  }
+
+  function closeSheet(opts) {
+    if (!sheetState.open) return;
+    opts = opts || {};
+    var opener = sheetState.opener;
+    sheetState.open = false;
+    sheetState.onConfirm = null;
+    els.sheetWrap.hidden = true;
+    document.body.classList.remove('sheet-open');
+
+    if (opts.restoreFocus !== false && opener && document.contains(opener) &&
+      typeof opener.focus === 'function') {
+      try {
+        opener.focus({ preventScroll: true });
+      } catch (e) {
+        /* opener was re-rendered away */
+      }
+    }
+  }
+
+  function onSheetClick(e) {
+    if (e.target.closest('[data-sheet-close]')) {
+      e.preventDefault();
+      closeSheet();
+      return;
+    }
+
+    var confirmBtn = e.target.closest('[data-sheet-confirm]');
+    if (confirmBtn) {
+      var fn = sheetState.onConfirm;
+      buzz(12);
+      closeSheet({ restoreFocus: false });
+      if (fn) fn();
+      return;
+    }
+
+    var actBtn = e.target.closest('[data-sheet-act]');
+    if (!actBtn) return;
+
+    var act = actBtn.dataset.sheetAct;
+    var pi = sheetState.pi;
+    var ri = sheetState.ri;
+
+    if (act === 'pl-del' || act === 'row-del') {
+      confirmDelete(act === 'pl-del' ? 'pl' : 'row', pi, ri);
+      return;
+    }
+
+    buzz(8);
+    closeSheet({ restoreFocus: false });
+    performAction(act, pi, ri, null);
+  }
+
+  function trapSheetFocus(e) {
+    var items = els.sheet.querySelectorAll(
+      'button:not([disabled]), [href], input:not([disabled]), ' +
+      'select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    if (!items.length) return;
+    var first = items[0];
+    var last = items[items.length - 1];
+
+    if (!els.sheet.contains(document.activeElement)) {
+      e.preventDefault();
+      first.focus();
+    } else if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
+  function confirmDelete(kind, pi, ri) {
+    var pl = state.playlists[pi];
+    if (!pl) return;
+    var isPl = kind === 'pl';
+    var row = isPl ? null : pl.rows[ri];
+    if (!isPl && !row) return;
+
+    buzz(12);
+    showSheet({
+      title: isPl ? 'Delete playlist?' : 'Delete row?',
+      sub: isPl ? pl.name : (row.name || ('Row ' + (ri + 1))),
+      message: isPl
+        ? 'Its ' + pl.rows.length + ' row(s) will be deleted too. This cannot be undone.'
+        : 'The row will be removed from ' + pl.name + '. This cannot be undone.',
+      confirmLabel: isPl ? 'Delete playlist' : 'Delete row',
+      onConfirm: function () {
+        if (isPl) dropPlaylist(pi);
+        else dropRow(pi, ri);
+      }
+    });
+  }
+
+  function performAction(act, pi, ri, btn) {
+    switch (act) {
+      case 'pl-play':
+        togglePlay(pi);
+        break;
+      case 'pl-dup':
+        duplicatePlaylist(pi);
+        break;
+      case 'pl-del':
+        confirmDelete('pl', pi, 0);
+        break;
+      case 'pl-wav':
+        exportPlaylist(pi);
+        break;
+      case 'pl-load':
+        beginImport(pi);
+        break;
+      case 'row-add':
+        addRow(pi, btn);
+        break;
+      case 'row-dup':
+        duplicateRow(pi, ri);
+        break;
+      case 'row-del':
+        confirmDelete('row', pi, ri);
+        break;
+      case 'row-up':
+        moveRow(pi, ri, -1);
+        break;
+      case 'row-down':
+        moveRow(pi, ri, 1);
+        break;
+      case 'row-save':
+        saveRowConfig(pi, ri);
+        break;
+      case 'row-mode':
+        setMode(pi, ri, btn.dataset.mode);
+        break;
+    }
+  }
+
+  /* ── structural actions ──────────────────────────────────── */
 
   function addPlaylist() {
     var pl = M.newPlaylist('Playlist ' + (state.playlists.length + 1));
@@ -689,8 +909,12 @@
   }
 
   function removePlaylist(pi) {
+    confirmDelete('pl', pi, 0);
+  }
+
+  function dropPlaylist(pi) {
     var pl = state.playlists[pi];
-    if (!confirm('Delete "' + pl.name + '"? Its ' + pl.rows.length + ' row(s) go with it.')) return;
+    if (!pl) return;
     if (state.play) stopPlayback(true);
     state.playlists.splice(pi, 1);
     if (!state.playlists.length) state.playlists.push(M.newPlaylist('Playlist 1'));
@@ -710,10 +934,18 @@
   }
 
   function removeRow(pi, ri) {
+    confirmDelete('row', pi, ri);
+  }
+
+  function dropRow(pi, ri) {
     var pl = state.playlists[pi];
+    if (!pl || !pl.rows[ri]) return;
+    if (state.active.pi === pi) {
+      if (state.active.ri === ri) state.active = { pi: -1, ri: -1 };
+      else if (state.active.ri > ri) state.active.ri -= 1;
+    }
     pl.rows.splice(ri, 1);
     M.renumber(pl);
-    if (state.active.pi === pi) state.active = { pi: -1, ri: -1 };
     saveNow();
     renderAll();
     pushUpdate(pi);
@@ -1116,52 +1348,19 @@
     var ri = Number(btn.dataset.ri);
     var pl = state.playlists[pi];
 
-    switch (act) {
-      case 'pl-more':
-        togglePanel(btn.closest('.pl').querySelector('.pl-more'));
-        btn.setAttribute('aria-expanded', btn.closest('.pl').querySelector('.pl-more').hidden ? 'false' : 'true');
-        break;
-      case 'pl-play':
-        togglePlay(pi);
-        break;
-      case 'pl-dup':
-        duplicatePlaylist(pi);
-        break;
-      case 'pl-del':
-        removePlaylist(pi);
-        break;
-      case 'pl-wav':
-        exportPlaylist(pi);
-        break;
-      case 'pl-load':
-        beginImport(pi);
-        break;
-      case 'row-add':
-        addRow(pi, btn);
-        break;
-      case 'row-more':
-        togglePanel(btn.closest('.row').querySelector('.row-actions'));
-        btn.setAttribute('aria-expanded', btn.closest('.row').querySelector('.row-actions').hidden ? 'false' : 'true');
-        break;
-      case 'row-dup':
-        duplicateRow(pi, ri);
-        break;
-      case 'row-del':
-        removeRow(pi, ri);
-        break;
-      case 'row-up':
-        moveRow(pi, ri, -1);
-        break;
-      case 'row-down':
-        moveRow(pi, ri, 1);
-        break;
-      case 'row-save':
-        saveRowConfig(pi, ri);
-        break;
-      case 'row-mode':
-        setMode(pi, ri, btn.dataset.mode);
-        break;
+    if (act === 'pl-more') {
+      openSheet('pl', pi, 0, btn);
+      return;
     }
+    if (act === 'row-more') {
+      openSheet('row', pi, ri, btn);
+      return;
+    }
+    if (act === 'row-add') {
+      addRow(pi, btn);
+      return;
+    }
+    performAction(act, pi, ri, btn);
   }
 
   function onVolume() {
@@ -1219,12 +1418,22 @@
       beginImport(state.playlists.length - 1);
     });
     els.file.addEventListener('change', onFiles);
+    els.sheetWrap.addEventListener('click', onSheetClick);
 
     document.addEventListener('click', function (e) {
       if (!e.target.closest('#topMenu') && !e.target.closest('#btnMenu')) setMenuOpen(false);
       if (!e.target.closest('#volPop') && !e.target.closest('#btnVol')) setVolOpen(false);
     });
     document.addEventListener('keydown', function (e) {
+      if (sheetState.open) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeSheet();
+        } else if (e.key === 'Tab') {
+          trapSheetFocus(e);
+        }
+        return;
+      }
       if (e.key === 'Escape') {
         setMenuOpen(false);
         setVolOpen(false);
@@ -1269,6 +1478,12 @@
     els.add = $('btnAdd');
     els.importBtn = $('btnImport');
     els.file = $('fileInput');
+    els.sheetWrap = $('sheetWrap');
+    els.sheet = $('sheet');
+    els.sheetTitle = $('sheetTitle');
+    els.sheetSub = $('sheetSub');
+    els.sheetActions = $('sheetActions');
+    els.sheetCancel = $('sheetCancel');
 
     var saved = M.loadState();
     if (saved) {

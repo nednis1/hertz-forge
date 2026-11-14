@@ -3,7 +3,7 @@
    Cache-first for the app itself; network passthrough otherwise.
    Bump CACHE when shipping changes.
    ============================================================ */
-var CACHE = 'hertz-forge-v3';
+var CACHE = 'hertz-forge-v4';
 var ASSETS = [
   './',
   './index.html',

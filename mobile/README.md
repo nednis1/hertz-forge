@@ -37,6 +37,11 @@ without browser chrome, keeps its own icon, and works offline after the first lo
 - Playlist headers **stick** under the top bar while you scroll its rows.
 - `loop`, `shuffle` and the overflow menu (`⋯`) stay in the top bar; new
   playlist and `.hfc` loading live in the overflow menu.
+- A playlist's or row's `⋯` opens a **bottom action sheet** (export, duplicate,
+  move, save, load, delete). Delete asks for confirmation in the same sheet.
+  Escape, the backdrop and **Cancel** close it.
+- Adding or duplicating a row keeps the page where it was, keeps the caret in a
+  field you are editing, and keeps the add button under your thumb.
 - Every button, checkbox and input is sized for a thumb (44px minimum), and
   inputs use 16px text so iOS does not zoom on focus.
 

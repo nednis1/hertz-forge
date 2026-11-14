@@ -56,6 +56,17 @@
   </div>
 </footer>
 
+<div id="sheetWrap" class="sheet-wrap" hidden>
+  <div class="sheet-backdrop" data-sheet-close></div>
+  <div id="sheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <h2 id="sheetTitle" class="sheet-title"></h2>
+    <p id="sheetSub" class="sheet-sub" hidden></p>
+    <div id="sheetActions" class="sheet-actions"></div>
+    <button id="sheetCancel" class="btn sheet-cancel" type="button" data-sheet-close>Cancel</button>
+  </div>
+</div>
+
 <input id="fileInput" type="file" accept=".hfc,application/json" multiple hidden>
 
 <script src="js/dsp-core.js"></script>
