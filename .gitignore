@@ -1,2 +1,11 @@
 __pycache__/
 *.pyc
+
+# mobile/ — everything phone-related lives here
+# generated hosting bundle (built from mobile/app/)
+mobile/dist/
+# Android build toolchain and outputs
+.android-sdk/
+mobile/android/build/
+mobile/android/keystore/
+mobile/build/

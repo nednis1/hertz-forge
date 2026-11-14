@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c0c18">
+<meta name="description" content="Hertz Forge playlist player — binaural beats, amplitude modulation, bilateral panning and frequency modulation.">
+<title>Hertz Forge Playlist</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Hertz Forge <small>playlist</small></div>
+  <div class="topbar-actions">
+    <button id="btnPlayAll" class="btn primary" title="Play all" aria-label="Play all">▶</button>
+    <button id="btnChainLoop" class="btn toggle" aria-pressed="false" title="Loop playlists">loop</button>
+    <button id="btnChainShuffle" class="btn toggle" aria-pressed="false" title="Shuffle playlists">shuffle</button>
+    <button id="btnImport" class="btn" title="Load .hfc configs" aria-label="Load configs">⇩</button>
+    <button id="btnAdd" class="btn" title="New playlist" aria-label="New playlist">＋</button>
+  </div>
+</header>
+
+<div class="master">
+  <label for="vol">Volume</label>
+  <input id="vol" type="range" min="0" max="100" step="1" value="50">
+  <output id="volOut" for="vol">50%</output>
+</div>
+
+<p class="hint">Binaural beats and bilateral panning need headphones — each ear gets a different signal.</p>
+
+<main id="playlists" class="playlists" aria-live="polite"></main>
+
+<div id="status" class="statusbar" role="status">Ready</div>
+<input id="fileInput" type="file" accept=".hfc,application/json" multiple hidden>
+
+<script src="js/dsp-core.js"></script>
+<script src="js/model.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
