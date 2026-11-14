@@ -40,6 +40,12 @@
     });
   }
 
+  /* Inline sprite glyph from index.html — consistent across platforms. */
+  function icon(name, cls) {
+    return '<svg class="ico' + (cls ? ' ' + cls : '') + '" aria-hidden="true" focusable="false">' +
+      '<use href="#i-' + name + '"></use></svg>';
+  }
+
   function fmtTime(sec) {
     var e = Math.max(0, Math.floor(sec || 0));
     var s = e % 60;
@@ -145,7 +151,7 @@
 
   function numField(pi, ri, scope, field, side, value, min, max, step, unit, label) {
     return '<label class="field"><span class="lab">' + label + '</span><span class="ctl">' +
-      '<input class="num" type="number" inputmode="decimal" min="' + min + '" max="' + max +
+      '<input class="num" type="number" inputmode="decimal" enterkeyhint="done" min="' + min + '" max="' + max +
       '" step="' + step + '" value="' + Math.round(value) + '" data-unit="' + (unit || '') + '" ' +
       ctlAttrs(pi, ri, scope, field, side) + '><em class="unit">' + (unit || '') + '</em>' +
       '</span></label>';
@@ -216,11 +222,11 @@
       '</div>' +
       (mode === 'norm'
         ? '<button class="seg-btn adv-toggle' + (row.adv_on ? ' on' : '') + '" data-act="row-mode" data-mode="' +
-          (row.adv_on ? 'norm' : 'adv') + '" ' + d + '>Adv ' + (row.adv_on ? '▾' : '▸') + '</button>'
+          (row.adv_on ? 'norm' : 'adv') + '" ' + d + '>Adv ' + icon(row.adv_on ? 'chevron-down' : 'chevron-right') + '</button>'
         : '') +
       '<label class="chk"><input type="checkbox" ' + ctlAttrs(pi, ri, 'row', 'sync') +
         (row.sync_on ? ' checked' : '') + '> sync</label>' +
-      '<label class="dur">for <input class="num" type="number" inputmode="numeric" min="0" max="36000" step="1" value="' +
+      '<label class="dur">for <input class="num" type="number" inputmode="numeric" enterkeyhint="done" min="0" max="36000" step="1" value="' +
         Math.round(row.duration) + '" ' + ctlAttrs(pi, ri, 'row', 'duration') + '> s</label>' +
       '</div>';
 
@@ -252,9 +258,9 @@
       ' aria-label="' + (row.collapsed ? 'Expand row' : 'Collapse row') + '"' +
       ' aria-expanded="' + (row.collapsed ? 'false' : 'true') + '"' +
       (row.collapsed ? '' : ' aria-controls="' + bodyId + '"') + '>' +
-      (row.collapsed ? '▸' : '▾') + '</button>';
+      icon(row.collapsed ? 'chevron-right' : 'chevron-down') + '</button>';
     var more = '<button class="icon" type="button" data-act="row-more" ' + d +
-      ' aria-label="Row actions" aria-haspopup="dialog">⋯</button>';
+      ' aria-label="Row actions" aria-haspopup="dialog">' + icon('more') + '</button>';
 
     if (row.collapsed) {
       return '<article class="row collapsed' + (active ? ' active' : '') + '" ' + d + '>' +
@@ -287,7 +293,7 @@
       ' aria-label="' + (pl.collapsed ? 'Expand playlist' : 'Collapse playlist') + '"' +
       ' aria-expanded="' + (pl.collapsed ? 'false' : 'true') + '"' +
       (pl.collapsed ? '' : ' aria-controls="' + rowsId + '"') + '>' +
-      (pl.collapsed ? '▸' : '▾') + '</button>';
+      icon(pl.collapsed ? 'chevron-right' : 'chevron-down') + '</button>';
 
     return '<section class="pl' + (pl.collapsed ? ' collapsed' : '') + (playing ? ' playing' : '') + '" ' + d + '>' +
       '<div class="pl-head">' +
@@ -295,29 +301,29 @@
           (pl.included !== false ? ' checked' : '') + ' aria-label="Include playlist"></label>' +
         caret +
         '<div class="pl-title">' +
-          '<input class="pl-name" type="text" value="' + esc(pl.name) + '" ' +
+          '<input class="pl-name" type="text" enterkeyhint="done" value="' + esc(pl.name) + '" ' +
             ctlAttrs(pi, 0, 'pl', 'name') + ' aria-label="Playlist name">' +
           '<span class="total" data-total="' + pi + '">' + fmtTime(total) + '</span>' +
         '</div>' +
         '<button class="btn play' + (playing ? ' stop' : '') + '" type="button" data-act="pl-play" ' + d +
           ' aria-label="' + (playing ? 'Stop playlist' : 'Play playlist') + '">' +
-          (playing ? '■' : '▶') + '</button>' +
+          icon(playing ? 'stop' : 'play') + '</button>' +
         '<button class="icon" type="button" data-act="pl-more" ' + d +
-          ' aria-label="Playlist actions" aria-haspopup="dialog">⋯</button>' +
+          ' aria-label="Playlist actions" aria-haspopup="dialog">' + icon('more') + '</button>' +
       '</div>' +
       '<div class="pl-meta">' +
         '<label class="chk"><input type="checkbox" ' + ctlAttrs(pi, 0, 'pl', 'loop') +
           (pl.row_loop ? ' checked' : '') + '> loop</label>' +
         '<label class="chk"><input type="checkbox" ' + ctlAttrs(pi, 0, 'pl', 'shuffle') +
           (pl.row_shuffle ? ' checked' : '') + '> shuffle</label>' +
-        '<label class="chk tiny">rows <input class="num" type="number" inputmode="numeric" min="0" max="99" value="' +
+        '<label class="chk tiny">rows <input class="num" type="number" inputmode="numeric" enterkeyhint="done" min="0" max="99" value="' +
           (pl.play_rows | 0) + '" ' + ctlAttrs(pi, 0, 'pl', 'playrows') + '></label>' +
       '</div>' +
       (pl.collapsed ? '' :
         '<div class="rows" id="' + rowsId + '">' + pl.rows.map(function (r, ri) {
           return rowHTML(pi, ri, r);
         }).join('') + '</div>' +
-        '<button class="btn add" type="button" data-act="row-add" ' + d + '>＋ row</button>') +
+        '<button class="btn add" type="button" data-act="row-add" ' + d + '>' + icon('add') + 'row</button>') +
       '</section>';
   }
 
@@ -344,6 +350,17 @@
     }
     restoreFocus(focus);
     syncChrome();
+  }
+
+  /* Keeps the field being edited visible above the dock once the keyboard opens. */
+  function ensureFieldVisible(el) {
+    if (!el || document.activeElement !== el) return;
+    var r = el.getBoundingClientRect();
+    var dockH = els.dock ? els.dock.getBoundingClientRect().height : 0;
+    var floor = window.innerHeight - dockH - 16;
+    var ceil = 64;
+    if (r.bottom > floor) scrollTo(window.scrollY + (r.bottom - floor), true);
+    else if (r.top < ceil) scrollTo(window.scrollY - (ceil - r.top), true);
   }
 
   function scrollTo(y, smooth) {
@@ -437,7 +454,7 @@
   function syncChrome() {
     var playing = !!state.play;
     var paused = playing && state.paused;
-    els.dockPlay.textContent = playing ? (paused ? '▶' : '❚❚') : '▶';
+    els.dockPlay.innerHTML = icon(playing ? (paused ? 'play' : 'pause') : 'play');
     els.dockPlay.setAttribute('aria-label', playing ? (paused ? 'Resume' : 'Pause') : 'Play all');
     els.stop.hidden = !playing;
     setToggle(els.chainLoop, state.chain.loop);
@@ -722,9 +739,10 @@
     }
   }
 
-  function sheetAction(act, label, cls, disabled) {
+  function sheetAction(act, label, cls, disabled, iconName) {
     return '<button class="btn sheet-btn' + (cls ? ' ' + cls : '') + '" type="button" ' +
-      'data-sheet-act="' + act + '"' + (disabled ? ' disabled' : '') + '>' + label + '</button>';
+      'data-sheet-act="' + act + '"' + (disabled ? ' disabled' : '') + '>' +
+      (iconName ? icon(iconName) : '') + '<span>' + label + '</span></button>';
   }
 
   function openSheet(kind, pi, ri, opener) {
@@ -746,22 +764,22 @@
       sub = pl.rows.length + (pl.rows.length === 1 ? ' row' : ' rows') +
         ' · ' + fmtTime(M.playbackDuration(pl));
       actions =
-        sheetAction('pl-wav', 'Export WAV') +
-        sheetAction('pl-dup', 'Duplicate playlist') +
-        sheetAction('pl-load', 'Load .hfc into this playlist') +
+        sheetAction('pl-wav', 'Export WAV', '', false, 'export') +
+        sheetAction('pl-dup', 'Duplicate playlist', '', false, 'copy') +
+        sheetAction('pl-load', 'Load .hfc into this playlist', '', false, 'import') +
         '<div class="sheet-sep" aria-hidden="true"></div>' +
-        sheetAction('pl-del', 'Delete playlist', 'danger');
+        sheetAction('pl-del', 'Delete playlist', 'danger', false, 'trash');
     } else {
       var row = pl.rows[ri];
       title = row.name || ('Row ' + (ri + 1));
       sub = rowSummary(row) + ' · ' + fmtTime(row.duration);
       actions =
-        sheetAction('row-dup', 'Duplicate row') +
-        sheetAction('row-up', 'Move up', '', ri === 0) +
-        sheetAction('row-down', 'Move down', '', ri === pl.rows.length - 1) +
-        sheetAction('row-save', 'Save .hfc') +
+        sheetAction('row-dup', 'Duplicate row', '', false, 'copy') +
+        sheetAction('row-up', 'Move up', '', ri === 0, 'up') +
+        sheetAction('row-down', 'Move down', '', ri === pl.rows.length - 1, 'down') +
+        sheetAction('row-save', 'Save .hfc', '', false, 'export') +
         '<div class="sheet-sep" aria-hidden="true"></div>' +
-        sheetAction('row-del', 'Delete row', 'danger');
+        sheetAction('row-del', 'Delete row', 'danger', false, 'trash');
     }
 
     buzz(6);
@@ -780,7 +798,7 @@
     if (cfg.message) {
       els.sheetActions.innerHTML = '<p class="sheet-msg">' + esc(cfg.message) + '</p>' +
         '<button class="btn sheet-btn danger" type="button" data-sheet-confirm>' +
-        esc(cfg.confirmLabel || 'Delete') + '</button>';
+        icon('trash') + '<span>' + esc(cfg.confirmLabel || 'Delete') + '</span></button>';
       sheetState.onConfirm = cfg.onConfirm || null;
     } else {
       els.sheetActions.innerHTML = cfg.actions || '';
@@ -1550,6 +1568,23 @@
         setMenuOpen(false);
         setVolOpen(false);
       }
+    });
+
+    /* Enter commits a field and dismisses the keyboard. */
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || sheetState.open) return;
+      var t = e.target;
+      if (!t || t.tagName !== 'INPUT' || t.type === 'range') return;
+      if (!els.list.contains(t)) return;
+      e.preventDefault();
+      t.blur();
+    });
+
+    /* The keyboard resizes the viewport; keep the focused field above the dock. */
+    els.list.addEventListener('focusin', function (e) {
+      var t = e.target;
+      if (!t || t.tagName !== 'INPUT' || t.type === 'range') return;
+      setTimeout(function () { ensureFieldVisible(t); }, 260);
     });
 
     player.onStatus = onStatus;

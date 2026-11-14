@@ -16,6 +16,27 @@
 </head>
 <body>
 
+<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.4v13.2L19 12z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7.5 5.4h3.2v13.2H7.5zM13.3 5.4h3.2v13.2h-3.2z"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.2" y="6.2" width="11.6" height="11.6" rx="1.6"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M7 5.4h2.3v13.2H7zM17.6 5.4v13.2L9.3 12z"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M14.7 5.4H17v13.2h-2.3zM6.4 5.4 14.7 12l-8.3 6.6z"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 9h3.4l4.6-3.8v13.6L7.4 15H4z"/><path d="M15.2 9a4.4 4.4 0 0 1 0 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M17.8 6.6a7.8 7.8 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-import" viewBox="0 0 24 24"><path d="M11 4h2v8.2l2.9-2.9 1.4 1.5L12 16.3 6.7 10.8l1.4-1.5L11 12.2z"/><path d="M5 18.2h14v1.6H5z"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M11 20h2v-8.2l2.9 2.9 1.4-1.5L12 7.7l-5.3 5.5 1.4 1.5L11 11.8z"/><path d="M5 4.2h14v1.6H5z"/></symbol>
+    <symbol id="i-add" viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18" cy="12" r="1.7"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9.3 5.3 16 12l-6.7 6.7-1.4-1.4L13.2 12 7.9 6.7z"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M5.3 9.3 12 16l6.7-6.7-1.4-1.4L12 13.2 6.7 7.9z"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M11 8.2 6.7 12.5 5.3 11.1 12 4.4l6.7 6.7-1.4 1.4L13 8.2V20h-2z"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M13 15.8l4.3-4.3 1.4 1.4L12 19.6l-6.7-6.7 1.4-1.4L11 15.8V4h2z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><path d="M8 3.5h9.5A1.5 1.5 0 0 1 19 5v9.5h-2V5.5H8zM5.5 8H15a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 15 20H5.5A1.5 1.5 0 0 1 4 18.5v-9A1.5 1.5 0 0 1 5.5 8z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M9.2 3.6h5.6l.7 1.4H20v1.8H4V5h4.5zM6.3 8h11.4l-.8 11.4a1.6 1.6 0 0 1-1.6 1.5H8.7a1.6 1.6 0 0 1-1.6-1.5zm3.5 2.2v8h1.7v-8zm3.3 0v8H14v-8z"/></symbol>
+  </defs>
+</svg>
+
 <header class="topbar">
   <div class="brand">Hertz Forge <small>playlist</small></div>
   <div class="topbar-actions">
@@ -25,11 +46,11 @@
     <button id="btnChainShuffle" class="btn toggle" aria-pressed="false" aria-label="Shuffle playlists">
       <span class="full">shuffle</span><span class="mini" aria-hidden="true">⇄</span>
     </button>
-    <button id="btnMenu" class="btn icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="More actions">⋯</button>
+    <button id="btnMenu" class="btn icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="More actions"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-more"></use></svg></button>
   </div>
   <div id="topMenu" class="menu" hidden>
-    <button id="btnAdd" class="menu-item" type="button">＋ New playlist</button>
-    <button id="btnImport" class="menu-item" type="button">⇩ Load .hfc</button>
+    <button id="btnAdd" class="menu-item" type="button"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-add"></use></svg>New playlist</button>
+    <button id="btnImport" class="menu-item" type="button"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-import"></use></svg>Load .hfc</button>
   </div>
 </header>
 
@@ -44,11 +65,11 @@
     <span id="dockTime" class="dock-time"></span>
   </div>
   <div class="dock-actions">
-    <button id="btnPrev" class="dock-btn" type="button" aria-label="Previous playlist" disabled>⏮</button>
-    <button id="btnDockPlay" class="dock-btn go" type="button" aria-label="Play all">▶</button>
-    <button id="btnNext" class="dock-btn" type="button" aria-label="Next playlist" disabled>⏭</button>
-    <button id="btnStop" class="dock-btn stop" type="button" aria-label="Stop" hidden>■</button>
-    <button id="btnVol" class="dock-btn vol" type="button" aria-label="Volume" aria-expanded="false">🔊 <span id="volLabel">50%</span></button>
+    <button id="btnPrev" class="dock-btn" type="button" aria-label="Previous playlist" disabled><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-prev"></use></svg></button>
+    <button id="btnDockPlay" class="dock-btn go" type="button" aria-label="Play all"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-play"></use></svg></button>
+    <button id="btnNext" class="dock-btn" type="button" aria-label="Next playlist" disabled><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-next"></use></svg></button>
+    <button id="btnStop" class="dock-btn stop" type="button" aria-label="Stop" hidden><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-stop"></use></svg></button>
+    <button id="btnVol" class="dock-btn vol" type="button" aria-label="Volume" aria-expanded="false"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-volume"></use></svg><span id="volLabel">50%</span></button>
   </div>
   <div id="volPop" class="vol-pop" hidden>
     <label for="vol">Volume</label>
