@@ -320,9 +320,80 @@
       '</section>';
   }
 
-  function renderAll() {
+  /* Rebuilds the playlist list while keeping the viewport and the focused
+     control where the user left them. Structural edits otherwise jump the
+     page, close the keyboard and lose the caret. */
+  function renderAll(opts) {
+    opts = opts || {};
+    var scrollY = window.scrollY;
+    var focus = captureFocus();
+    var anchor = opts.anchor || null;
+    var anchorSel = anchor ? selectorForEl(anchor) : null;
+    var anchorTop = anchor ? anchor.getBoundingClientRect().top : 0;
+
     els.list.innerHTML = state.playlists.map(playlistHTML).join('');
+
+    var again = anchorSel ? els.list.querySelector(anchorSel) : null;
+    if (anchor && again) {
+      /* Keep the control the user just tapped under their thumb. */
+      var delta = again.getBoundingClientRect().top - anchorTop;
+      if (delta) window.scrollBy(0, delta);
+    } else {
+      window.scrollTo(0, scrollY);
+    }
+    restoreFocus(focus);
     syncChrome();
+  }
+
+  /* Stable identity for a rendered control, independent of DOM order. */
+  function selectorForEl(el) {
+    if (!el || !el.dataset) return null;
+    var ds = el.dataset;
+    var parts = [];
+    if (ds.act) parts.push('[data-act="' + ds.act + '"]');
+    if (ds.scope) parts.push('[data-scope="' + ds.scope + '"]');
+    if (ds.field) parts.push('[data-field="' + ds.field + '"]');
+    if (ds.side) parts.push('[data-side="' + ds.side + '"]');
+    if (ds.mode) parts.push('[data-mode="' + ds.mode + '"]');
+    if (ds.pi != null) parts.push('[data-pi="' + ds.pi + '"]');
+    if (ds.ri != null) parts.push('[data-ri="' + ds.ri + '"]');
+    return parts.length ? parts.join('') : null;
+  }
+
+  function captureFocus() {
+    var el = document.activeElement;
+    if (!el || el === document.body || !els.list.contains(el)) return null;
+    var sel = selectorForEl(el);
+    if (!sel) return null;
+    var start = null;
+    var end = null;
+    try {
+      if (typeof el.selectionStart === 'number') {
+        start = el.selectionStart;
+        end = el.selectionEnd;
+      }
+    } catch (e) {
+      /* number inputs reject selection reads in some browsers */
+    }
+    return { sel: sel, start: start, end: end };
+  }
+
+  function restoreFocus(key) {
+    if (!key) return;
+    var el = els.list.querySelector(key.sel);
+    if (!el) return;
+    try {
+      el.focus({ preventScroll: true });
+    } catch (e) {
+      return;
+    }
+    if (key.start != null) {
+      try {
+        el.setSelectionRange(key.start, key.end);
+      } catch (e) {
+        /* not a text input */
+      }
+    }
   }
 
   function syncChrome() {
@@ -628,12 +699,13 @@
     setStatus('Deleted ' + pl.name);
   }
 
-  function addRow(pi) {
+  function addRow(pi, opener) {
     var pl = state.playlists[pi];
     pl.rows.push(M.newRow());
     M.renumber(pl);
     saveNow();
-    renderAll();
+    /* Anchor on the add button so it stays under the thumb. */
+    renderAll({ anchor: opener });
     pushUpdate(pi);
   }
 
@@ -1065,7 +1137,7 @@
         beginImport(pi);
         break;
       case 'row-add':
-        addRow(pi);
+        addRow(pi, btn);
         break;
       case 'row-more':
         togglePanel(btn.closest('.row').querySelector('.row-actions'));
