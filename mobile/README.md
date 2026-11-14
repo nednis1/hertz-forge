@@ -31,17 +31,21 @@ without browser chrome, keeps its own icon, and works offline after the first lo
 
 - The **bottom dock** is always visible and holds every control: previous/next
   playlist, play/pause, stop, **loop**, **shuffle**, the **⋯** menu, the current
-  playlist + row with elapsed time, a progress line, and a volume popover. The
-  top bar is just the title, so nothing important sits out of thumb reach.
+  playlist + row with elapsed time, a progress line, and a volume popover. There
+  is no top bar at all: the title sits in a one-line hint above the list, so the
+  first playlist starts at the top of the screen and every control is at the
+  bottom.
 - **Pause** suspends the audio clock, so resuming continues from the exact
   position. **Stop** (the red ■ next to the transport) ends playback.
 - During playback the dock **follows the playing row** into view. If you scroll
   to edit something, it leaves the page alone for a few seconds, then follows
   again on the next track.
-- Rows start **collapsed** as a one-line summary (mode, carrier/beat, duration).
+- Rows start **collapsed** as a single 50px line: name plus a small summary
+  (mode, carrier/beat) on the same header as the duration, so a long playlist
+  costs half the scrolling it used to.
   Tap anywhere on a row header to open its parameters; tap again to fold it.
   The chevron is also a real button and announces expanded/collapsed state.
-- Playlist headers **stick** under the top bar while you scroll its rows.
+- Playlist headers **stick** to the top of the screen while you scroll its rows.
 - `loop`, `shuffle` and the **⋯** menu sit in the dock line above the transport;
   the menu opens **upward** from the dock. New playlist and `.hfc` loading live
   in it.

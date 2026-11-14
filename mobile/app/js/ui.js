@@ -267,20 +267,24 @@
     var more = '<button class="icon" type="button" data-act="row-more" ' + d +
       ' aria-label="Row actions" aria-haspopup="dialog">' + icon('more') + '</button>';
 
+    /* Collapsed rows keep name and summary on two lines inside one 48px head,
+       so a folded row costs a single line of scrolling height. */
     if (row.collapsed) {
       return '<article class="row collapsed' + (active ? ' active' : '') + '" ' + d + '>' +
         '<div class="row-head">' + check + caret +
-          '<span class="row-name">' + esc(name) + '</span>' +
+          '<span class="row-text">' +
+            '<span class="row-name">' + esc(name) + '</span>' +
+            '<span class="row-sum">' + rowSummary(row) + '</span>' +
+          '</span>' +
           '<span class="row-time" data-time="' + pi + ':' + ri + '">' + fmtTime(row.duration) + '</span>' +
           more +
         '</div>' +
-        '<div class="row-sum">' + rowSummary(row) + '</div>' +
       '</article>';
     }
 
     return '<article class="row' + (active ? ' active' : '') + '" ' + d + '>' +
       '<div class="row-head">' + check + caret +
-        '<span class="row-name">' + esc(name) + '</span>' +
+        '<span class="row-text"><span class="row-name">' + esc(name) + '</span></span>' +
         '<span class="row-time" data-time="' + pi + ':' + ri + '">' +
           fmtTime(active ? 0 : row.duration) + '</span>' +
         more +

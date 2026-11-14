@@ -495,6 +495,16 @@ minimum target sizes at the listed viewports.
   no worklet. It is now precached), README updated, APK
   rebuilt with build-tools 35 (34's bundled R8 crashes on JDK 21 class files)
   and verified with `apksigner`.
+- **Compact pass (follow-up).** Aimed at less scrolling on a phone: the
+  title-only top bar is gone (the brand moved into a one-line hint, 30px, which
+  scrolls away and lets sticky playlist headers pin to `--safe-top`), the row
+  summary moved inside the row header so a collapsed row is one 50px line
+  instead of a header plus a summary line, `.pl-meta` shrank 48 → 40px, and the
+  gaps/paddings tightened (rows 8 → 6, playlists 12 → 10, dock 6 → 4). The dock
+  is 99px and `--dock-h` follows it at 104px. Verified at 320/360/393/412px: no
+  horizontal overflow, no clipped hint, all dock buttons still 44px, and
+  `followActive()` still clears the sticky playlist header (it already tolerated
+  a missing top bar).
 - **Dock consolidation (follow-up).** `loop`, `shuffle` and the `⋯` menu moved
   out of the top bar into the dock's status line, next to the elapsed time; the
   top bar is now just the brand. They keep ids and handlers, got `i-loop` and
