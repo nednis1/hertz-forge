@@ -495,6 +495,13 @@ minimum target sizes at the listed viewports.
   no worklet. It is now precached), README updated, APK
   rebuilt with build-tools 35 (34's bundled R8 crashes on JDK 21 class files)
   and verified with `apksigner`.
+- **Slider height (follow-up).** `input[type=range]` was 44px tall for a 6px
+  track — mostly empty padding, and it doubled the height of every parameter.
+  It is 30px now (thumb still 24px), the typed twin is 36px tall instead of 44,
+  and field margins/gaps/side padding tightened. A field went 93 → 71px, so an
+  expanded row shrank 1161 → 927px at 320px wide (and 520px at 412px where the
+  sides sit two-up). Verified at 320 and 412px: no overflow, no clipped
+  children, slider still writes the model and the number box follows.
 - **Compact pass (follow-up).** Aimed at less scrolling on a phone: the
   title-only top bar is gone (the brand moved into a one-line hint, 30px, which
   scrolls away and lets sticky playlist headers pin to `--safe-top`), the row

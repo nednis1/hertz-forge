@@ -61,6 +61,9 @@ without browser chrome, keeps its own icon, and works offline after the first lo
   the same on Android, iOS and desktop instead of falling back to platform
   emoji. `loop` and `shuffle` use their own icons, with `aria-pressed` carrying
   the on/off state.
+- Parameter rows are compact: each slider is a 30px control (thumb sized for a
+  thumb, not a 44px empty box) with its editable value box above, so an expanded
+  row is about a fifth shorter than before.
 - **Every value can be typed.** Each slider carries an editable box beside its
   label: tap the number, enter an exact figure (`7.83` Hz, `432` Hz, `30`%) and
   the slider follows. Dragging the slider updates the box, so neither control is
