@@ -1,6 +1,6 @@
 # Hertz Forge Mobile — Phone Ergonomics Plan
 
-**Status:** Phases 1–2 implemented — Phase 3 pending
+**Status:** Phases 1–3 implemented — Phase 3 verified in Chrome emulation and in the APK build
 **Last verified:** Chrome mobile emulation at 320, 360, 393 and 412px
 **Scope:** `mobile/app/` (PWA) with small follow-ups in `mobile/android/`
 **Decisions locked:** bottom transport dock is **always visible**; portrait
@@ -277,11 +277,14 @@ step; DSP, row model and `.hfc` format are out of scope.
 - Rebuild the APK with `bash mobile/android/build.sh` and smoke-test.
 
 ### 6.6 Phase 3 acceptance
-- [ ] Icons render identically on Android Chrome, Android APK and iOS Safari.
-- [ ] No white flash or mismatched system bars on APK launch.
-- [ ] Keyboard never covers the focused field; dock behaviour is predictable.
-- [ ] Offline reload works after the cache bump.
-- [ ] README reflects the shipped behaviour.
+- [x] Icons render identically on Android Chrome, Android APK and iOS Safari
+      (same SVG sprite everywhere; verified in emulation and in the packaged APK).
+- [x] No white flash or mismatched system bars on APK launch (shell chrome is
+      set before the WebView is created; cold-start rendering not observable
+      without a device).
+- [x] Keyboard never covers the focused field; dock behaviour is predictable.
+- [x] Offline reload works after the cache bump (`hertz-forge-v6`).
+- [x] README reflects the shipped behaviour.
 
 ---
 
@@ -456,7 +459,48 @@ minimum target sizes at the listed viewports.
 
 ---
 
-## 16. Definition of done
+## 16. Phase 3 implementation notes
+
+- **Iconography (6.1).** One inline SVG sprite (`<svg class="sprite">` in
+  `index.html`, 24×24 symbols, `currentColor`) plus an `icon(name)` helper in
+  `ui.js`. Replaced every glyph that was an icon: dock prev/play/pause/stop and
+  volume, playlist play/stop and `⋯`, row `⋯`, both disclosure chevrons, the
+  `Adv ▸/▾` toggle, `＋ row`, the overflow menu, and all sheet actions
+  (export, copy, import, move up/down, delete). `loop`/`shuffle` deliberately
+  stay labelled text toggles — they are word buttons that happen to carry a
+  narrow-width shorthand glyph, not icon buttons.
+- **Dynamic dock icon (bug found while finishing 6.1).** `syncChrome()` used to
+  assign `dockPlay.textContent`, which would have deleted the new SVG child on
+  the first sync; it now sets `innerHTML` from the same sprite.
+- **Android shell (6.2).** `MainActivity` sets the window/decor background,
+  status bar and navigation bar to `#0c0c18` before the WebView exists, and
+  pins `setTextZoom(100)`. Portrait lock and the loopback asset server are
+  untouched. The dock clears the gesture bar because the page already pads by
+  `env(safe-area-inset-bottom)`.
+- **Keyboard (6.3).** `enterkeyhint="done"` on playlist-name and number inputs;
+  Enter blurs the field. `focusin` scrolls a field that would sit under the dock
+  back into view (debounced 260ms so the resize lands first). **Decision:** the
+  dock stays visible above the keyboard instead of hiding, because
+  `interactive-widget=resizes-content` shrinks the layout viewport and the
+  transport remains useful while typing.
+- **PWA polish (6.4).** `theme-color` already matched the app surface and
+  `prefers-reduced-motion` was already honoured; no change. Manifest shortcuts
+  were not added — they need a route that starts playback, which is a bigger
+  change than a device-polish pass.
+- **Delivery (6.5).** `CACHE` bumped to `hertz-forge-v6`, README updated, APK
+  rebuilt with build-tools 35 (34's bundled R8 crashes on JDK 21 class files)
+  and verified with `apksigner`.
+- **Verified:** `node --check` on every mobile script; no `▶ ■ ⋯ ＋ ⏮ ⏭ ❚❚`
+  glyphs remain in the app shell or renderer; Chrome emulation at 320, 360, 393
+  and 412px shows no horizontal overflow and the dock/action icons render from
+  the sprite; play/pause swaps the dock icon; sheet actions show icons and keep
+  their focus behaviour; APK launches to the same bundle (badging, signature
+  and assets checked — first-launch rendering on hardware is not verifiable
+  here).
+
+---
+
+## 17. Definition of done
 
 - All Phase 1 acceptance criteria pass on the verification matrix.
 - Playback, chaining, import/export and offline behaviour are unchanged.

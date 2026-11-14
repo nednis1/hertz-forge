@@ -50,6 +50,13 @@ without browser chrome, keeps its own icon, and works offline after the first lo
   field you are editing, and keeps the add button under your thumb.
 - Every button, checkbox and input is sized for a thumb (44px minimum), and
   inputs use 16px text so iOS does not zoom on focus.
+- Icons are inline SVG from a sprite in `index.html`, so play/pause/stop,
+  prev/next, volume, import, add, more, the chevrons and the sheet actions look
+  the same on Android, iOS and desktop instead of falling back to platform
+  emoji. `loop` and `shuffle` stay as labelled text toggles.
+- Name and number fields move above the dock when focused, and **Enter**
+  dismisses the keyboard. The dock stays above the keyboard rather than hiding
+  (the viewport uses `interactive-widget=resizes-content`).
 
 
 ## What carries over from the desktop app
