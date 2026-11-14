@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0c0c18">
 <meta name="description" content="Hertz Forge playlist player — binaural beats, amplitude modulation, bilateral panning and frequency modulation.">
 <title>Hertz Forge Playlist</title>
@@ -19,25 +19,43 @@
 <header class="topbar">
   <div class="brand">Hertz Forge <small>playlist</small></div>
   <div class="topbar-actions">
-    <button id="btnPlayAll" class="btn primary" title="Play all" aria-label="Play all">▶</button>
-    <button id="btnChainLoop" class="btn toggle" aria-pressed="false" title="Loop playlists">loop</button>
-    <button id="btnChainShuffle" class="btn toggle" aria-pressed="false" title="Shuffle playlists">shuffle</button>
-    <button id="btnImport" class="btn" title="Load .hfc configs" aria-label="Load configs">⇩</button>
-    <button id="btnAdd" class="btn" title="New playlist" aria-label="New playlist">＋</button>
+    <button id="btnChainLoop" class="btn toggle" aria-pressed="false" aria-label="Loop playlists">
+      <span class="full">loop</span><span class="mini" aria-hidden="true">↻</span>
+    </button>
+    <button id="btnChainShuffle" class="btn toggle" aria-pressed="false" aria-label="Shuffle playlists">
+      <span class="full">shuffle</span><span class="mini" aria-hidden="true">⇄</span>
+    </button>
+    <button id="btnMenu" class="btn icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="More actions">⋯</button>
+  </div>
+  <div id="topMenu" class="menu" hidden>
+    <button id="btnAdd" class="menu-item" type="button">＋ New playlist</button>
+    <button id="btnImport" class="menu-item" type="button">⇩ Load .hfc</button>
   </div>
 </header>
 
-<div class="master">
-  <label for="vol">Volume</label>
-  <input id="vol" type="range" min="0" max="100" step="1" value="50">
-  <output id="volOut" for="vol">50%</output>
-</div>
-
-<p class="hint">Binaural beats and bilateral panning need headphones — each ear gets a different signal.</p>
+<p class="hint">Headphones needed — each ear gets a different signal.</p>
 
 <main id="playlists" class="playlists" aria-live="polite"></main>
 
-<div id="status" class="statusbar" role="status">Ready</div>
+<footer class="dock" id="dock" aria-label="Playback controls">
+  <div class="dock-bar" aria-hidden="true"><span id="dockFill"></span></div>
+  <div class="dock-line">
+    <span id="dockInfo" class="dock-info" role="status" aria-live="polite">Ready</span>
+    <span id="dockTime" class="dock-time"></span>
+  </div>
+  <div class="dock-actions">
+    <button id="btnPrev" class="dock-btn" type="button" aria-label="Previous playlist" disabled>⏮</button>
+    <button id="btnDockPlay" class="dock-btn go" type="button" aria-label="Play all">▶</button>
+    <button id="btnNext" class="dock-btn" type="button" aria-label="Next playlist" disabled>⏭</button>
+    <button id="btnVol" class="dock-btn vol" type="button" aria-label="Volume" aria-expanded="false">🔊 <span id="volLabel">50%</span></button>
+  </div>
+  <div id="volPop" class="vol-pop" hidden>
+    <label for="vol">Volume</label>
+    <input id="vol" type="range" min="0" max="100" step="1" value="50">
+    <output id="volOut" for="vol">50%</output>
+  </div>
+</footer>
+
 <input id="fileInput" type="file" accept=".hfc,application/json" multiple hidden>
 
 <script src="js/dsp-core.js"></script>

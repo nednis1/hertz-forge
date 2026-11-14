@@ -24,6 +24,7 @@
   var wakeLock = null;
   var busyExport = false;
   var importTarget = -1;
+  var statusHold = 0;   /* keep a transient message visible over playback text */
 
   /* ── helpers ─────────────────────────────────────────────── */
 
@@ -45,8 +46,13 @@
   }
 
   function setStatus(msg, kind) {
-    els.status.textContent = msg || '';
-    els.status.dataset.kind = kind || '';
+    els.dockInfo.textContent = msg || '';
+    els.dockInfo.dataset.kind = kind || '';
+    statusHold = Date.now() + (kind === 'busy' ? 60000 : 4000);
+    if (!state.play) {
+      els.dockTime.textContent = '';
+      els.dockFill.style.width = '0%';
+    }
   }
 
   function clampNum(v, lo, hi) {
@@ -117,19 +123,20 @@
     var v = +value;
     var s = parseFloat(step) || 1;
     var txt = (s < 1 ? v.toFixed(1) : String(Math.round(v))) + (unit ? ' ' + unit : '');
-    return '<label class="field"><span class="lab">' + label + '</span><span class="ctl">' +
+    return '<label class="field"><span class="lab-row"><span class="lab">' + label + '</span>' +
+      '<output>' + txt + '</output></span>' +
       '<input type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + v +
       '" data-unit="' + (unit || '') + '" ' + ctlAttrs(pi, ri, scope, field, side) + '>' +
-      '<output>' + txt + '</output></span></label>';
+      '</label>';
   }
 
   function waveField(pi, ri, scope, field, side, value, label) {
-    return '<label class="field"><span class="lab">' + label + '</span><span class="ctl">' +
+    return '<label class="field"><span class="lab">' + label + '</span>' +
       '<select ' + ctlAttrs(pi, ri, scope, field, side) + '>' +
       M.WAVES.map(function (w) {
         return '<option value="' + w + '"' + (w === value ? ' selected' : '') + '>' +
           w.charAt(0).toUpperCase() + w.slice(1) + '</option>';
-      }).join('') + '</select></span></label>';
+      }).join('') + '</select></label>';
   }
 
   function numField(pi, ri, scope, field, side, value, min, max, step, unit, label) {
@@ -219,41 +226,52 @@
     return html;
   }
 
+  function rowSummary(row) {
+    if (row.binaural_on) {
+      return 'Binaural · ' + Math.round(row.bi_carrier) + ' Hz · ' + row.bi_bw + ' Hz beat';
+    }
+    if (row.adv_on) return 'Adv · ' + Math.round(row.left.carrier) + ' Hz';
+    var wave = row.left.wave || 'sine';
+    return 'Normal · ' + Math.round(row.left.carrier) + ' Hz · ' +
+      wave.charAt(0).toUpperCase() + wave.slice(1);
+  }
+
   function rowHTML(pi, ri, row) {
     var active = state.active.pi === pi && state.active.ri === ri;
     var name = row.name || ('Row ' + (ri + 1));
     var d = 'data-pi="' + pi + '" data-ri="' + ri + '"';
+    var check = '<label class="check-wrap"><input type="checkbox" class="check" ' +
+      ctlAttrs(pi, ri, 'row', 'include') + (row.included !== false ? ' checked' : '') +
+      ' aria-label="Include row"></label>';
+    var caret = '<span class="caret" aria-hidden="true">' + (row.collapsed ? '▸' : '▾') + '</span>';
+    var more = '<button class="icon" type="button" data-act="row-more" ' + d +
+      ' aria-label="Row actions" aria-expanded="false">⋯</button>';
 
     if (row.collapsed) {
-      return '<article class="row collapsed' + (active ? ' active' : '') + '" data-pi="' + pi + '" data-ri="' + ri + '">' +
-        '<div class="row-head">' +
-          '<input type="checkbox" class="check" ' + ctlAttrs(pi, ri, 'row', 'include') +
-            (row.included !== false ? ' checked' : '') + ' aria-label="Include row">' +
-          '<button class="icon" data-act="row-collapse" ' + d + '>▸</button>' +
+      return '<article class="row collapsed' + (active ? ' active' : '') + '" ' + d + '>' +
+        '<div class="row-head">' + check + caret +
           '<span class="row-name">' + esc(name) + '</span>' +
           '<span class="row-time" data-time="' + pi + ':' + ri + '">' + fmtTime(row.duration) + '</span>' +
-          '<button class="icon" data-act="row-more" ' + d + ' aria-label="Row actions">⋯</button>' +
+          more +
         '</div>' +
+        '<div class="row-sum">' + rowSummary(row) + '</div>' +
       '</article>';
     }
 
-    return '<article class="row' + (active ? ' active' : '') + '" data-pi="' + pi + '" data-ri="' + ri + '">' +
-      '<div class="row-head">' +
-        '<input type="checkbox" class="check" ' + ctlAttrs(pi, ri, 'row', 'include') +
-          (row.included !== false ? ' checked' : '') + ' aria-label="Include row">' +
-        '<button class="icon" data-act="row-collapse" ' + d + '>▾</button>' +
+    return '<article class="row' + (active ? ' active' : '') + '" ' + d + '>' +
+      '<div class="row-head">' + check + caret +
         '<span class="row-name">' + esc(name) + '</span>' +
         '<span class="row-time" data-time="' + pi + ':' + ri + '">' +
           fmtTime(active ? 0 : row.duration) + '</span>' +
-        '<button class="icon" data-act="row-more" ' + d + ' aria-label="Row actions">⋯</button>' +
+        more +
       '</div>' +
       '<div class="row-body">' + rowBodyHTML(pi, ri, row) +
         '<div class="row-actions" hidden>' +
-          '<button class="btn small" data-act="row-dup" ' + d + '>Duplicate</button>' +
-          '<button class="btn small" data-act="row-up" ' + d + '>↑ Up</button>' +
-          '<button class="btn small" data-act="row-down" ' + d + '>↓ Down</button>' +
-          '<button class="btn small" data-act="row-save" ' + d + '>Save .hfc</button>' +
-          '<button class="btn small danger" data-act="row-del" ' + d + '>Delete</button>' +
+          '<button class="btn small" type="button" data-act="row-dup" ' + d + '>Duplicate</button>' +
+          '<button class="btn small" type="button" data-act="row-up" ' + d + '>↑ Up</button>' +
+          '<button class="btn small" type="button" data-act="row-down" ' + d + '>↓ Down</button>' +
+          '<button class="btn small" type="button" data-act="row-save" ' + d + '>Save .hfc</button>' +
+          '<button class="btn small danger" type="button" data-act="row-del" ' + d + '>Delete</button>' +
         '</div>' +
       '</div>' +
     '</article>';
@@ -264,16 +282,21 @@
     var total = M.playbackDuration(pl);
     var d = 'data-pi="' + pi + '"';
 
-    return '<section class="pl' + (pl.collapsed ? ' collapsed' : '') + (playing ? ' playing' : '') + '" data-pi="' + pi + '">' +
+    return '<section class="pl' + (pl.collapsed ? ' collapsed' : '') + (playing ? ' playing' : '') + '" ' + d + '>' +
       '<div class="pl-head">' +
-        '<input type="checkbox" class="check" ' + ctlAttrs(pi, 0, 'pl', 'include') +
-          (pl.included !== false ? ' checked' : '') + ' aria-label="Include playlist">' +
-        '<button class="icon" data-act="pl-collapse" ' + d + '>' + (pl.collapsed ? '▸' : '▾') + '</button>' +
-        '<input class="pl-name" type="text" value="' + esc(pl.name) + '" ' +
-          ctlAttrs(pi, 0, 'pl', 'name') + ' aria-label="Playlist name">' +
-        '<button class="btn play' + (playing ? ' stop' : '') + '" data-act="pl-play" ' + d +
+        '<label class="check-wrap"><input type="checkbox" class="check" ' + ctlAttrs(pi, 0, 'pl', 'include') +
+          (pl.included !== false ? ' checked' : '') + ' aria-label="Include playlist"></label>' +
+        '<span class="caret" aria-hidden="true">' + (pl.collapsed ? '▸' : '▾') + '</span>' +
+        '<div class="pl-title">' +
+          '<input class="pl-name" type="text" value="' + esc(pl.name) + '" ' +
+            ctlAttrs(pi, 0, 'pl', 'name') + ' aria-label="Playlist name">' +
+          '<span class="total" data-total="' + pi + '">' + fmtTime(total) + '</span>' +
+        '</div>' +
+        '<button class="btn play' + (playing ? ' stop' : '') + '" type="button" data-act="pl-play" ' + d +
           ' aria-label="' + (playing ? 'Stop playlist' : 'Play playlist') + '">' +
           (playing ? '■' : '▶') + '</button>' +
+        '<button class="icon" type="button" data-act="pl-more" ' + d +
+          ' aria-label="Playlist actions" aria-expanded="false">⋯</button>' +
       '</div>' +
       '<div class="pl-meta">' +
         '<label class="chk"><input type="checkbox" ' + ctlAttrs(pi, 0, 'pl', 'loop') +
@@ -282,20 +305,18 @@
           (pl.row_shuffle ? ' checked' : '') + '> shuffle</label>' +
         '<label class="chk tiny">rows <input class="num" type="number" inputmode="numeric" min="0" max="99" value="' +
           (pl.play_rows | 0) + '" ' + ctlAttrs(pi, 0, 'pl', 'playrows') + '></label>' +
-        '<span class="total" data-total="' + pi + '">' + fmtTime(total) + '</span>' +
-        '<button class="icon" data-act="pl-more" ' + d + ' aria-label="Playlist actions">⋯</button>' +
       '</div>' +
       (pl.collapsed ? '' :
         '<div class="pl-more" hidden>' +
-          '<button class="btn small" data-act="pl-wav" ' + d + '>Export WAV</button>' +
-          '<button class="btn small" data-act="pl-dup" ' + d + '>Duplicate</button>' +
-          '<button class="btn small" data-act="pl-load" ' + d + '>Load .hfc</button>' +
-          '<button class="btn small danger" data-act="pl-del" ' + d + '>Delete</button>' +
+          '<button class="btn small" type="button" data-act="pl-wav" ' + d + '>Export WAV</button>' +
+          '<button class="btn small" type="button" data-act="pl-dup" ' + d + '>Duplicate</button>' +
+          '<button class="btn small" type="button" data-act="pl-load" ' + d + '>Load .hfc</button>' +
+          '<button class="btn small danger" type="button" data-act="pl-del" ' + d + '>Delete</button>' +
         '</div>' +
         '<div class="rows">' + pl.rows.map(function (r, ri) {
           return rowHTML(pi, ri, r);
         }).join('') + '</div>' +
-        '<button class="btn add" data-act="row-add" ' + d + '>＋ row</button>') +
+        '<button class="btn add" type="button" data-act="row-add" ' + d + '>＋ row</button>') +
       '</section>';
   }
 
@@ -306,12 +327,20 @@
 
   function syncChrome() {
     var playing = !!state.play;
-    els.playAll.textContent = playing ? '■' : '▶';
-    els.playAll.title = playing ? 'Stop' : 'Play all';
+    els.dockPlay.textContent = playing ? '■' : '▶';
+    els.dockPlay.classList.toggle('stop', playing);
+    els.dockPlay.setAttribute('aria-label', playing ? 'Stop' : 'Play all');
     setToggle(els.chainLoop, state.chain.loop);
     setToggle(els.chainShuffle, state.chain.shuffle);
     els.vol.value = state.masterVol;
     els.volOut.textContent = Math.round(state.masterVol) + '%';
+    els.volLabel.textContent = Math.round(state.masterVol) + '%';
+    els.prev.disabled = !canStep(-1);
+    els.next.disabled = !canStep(1);
+    if (!playing) {
+      els.dockTime.textContent = '';
+      els.dockFill.style.width = '0%';
+    }
   }
 
   function setToggle(btn, on) {
@@ -836,6 +865,54 @@
     startPlayback(state.queue[0], 'all');
   }
 
+  function navOrder() {
+    var out = [];
+    for (var i = 0; i < state.playlists.length; i++) {
+      if (state.playlists[i].included !== false) out.push(i);
+    }
+    return out;
+  }
+
+  function canStep(dir) {
+    if (!state.play) return false;
+    if (state.play.mode === 'all') {
+      if (!state.queue.length) return false;
+      var p = state.queuePos + dir;
+      return (p >= 0 && p < state.queue.length) || (state.chain.loop && state.queue.length > 1);
+    }
+    var order = navOrder();
+    var pos = order.indexOf(state.play.pi);
+    if (pos < 0) return false;
+    var n = pos + dir;
+    return (n >= 0 && n < order.length) || (state.chain.loop && order.length > 1);
+  }
+
+  function stepPlaylist(dir) {
+    if (!state.play) return;
+
+    if (state.play.mode === 'all') {
+      if (!state.queue.length) return;
+      var p = state.queuePos + dir;
+      if (p < 0 || p >= state.queue.length) {
+        if (!state.chain.loop || state.queue.length < 2) return;
+        p = (p + state.queue.length) % state.queue.length;
+      }
+      state.queuePos = p;
+      startPlayback(state.queue[p], 'all');
+      return;
+    }
+
+    var order = navOrder();
+    var pos = order.indexOf(state.play.pi);
+    if (pos < 0) return;
+    var n = pos + dir;
+    if (n < 0 || n >= order.length) {
+      if (!state.chain.loop || order.length < 2) return;
+      n = (n + order.length) % order.length;
+    }
+    startPlayback(order[n], 'single');
+  }
+
   function onStatus(idx, elapsed) {
     if (!state.play) return;
     var pi = state.play.pi;
@@ -859,14 +936,25 @@
       }
     }
 
+    var curPl = state.playlists[pi];
+    var row = idx >= 0 && curPl ? curPl.rows[idx] : null;
+    var dur = row ? row.duration : 0;
+
     if (idx >= 0) {
       var cur = els.list.querySelector('[data-time="' + pi + ':' + idx + '"]');
       if (cur) cur.textContent = fmtTime(elapsed);
     }
 
-    var label = 'Playing · ' + state.playlists[pi].name +
-      (idx >= 0 ? ' · row ' + (idx + 1) : '');
-    if (els.status.textContent !== label) setStatus(label);
+    els.dockFill.style.width = dur > 0 ? Math.min(100, (elapsed / dur) * 100) + '%' : '0%';
+    els.dockTime.textContent = idx >= 0 ? fmtTime(elapsed) + ' / ' + fmtTime(dur) : '';
+
+    if (Date.now() >= statusHold) {
+      var label = 'Playing · ' + curPl.name + (idx >= 0 ? ' · row ' + (idx + 1) : '');
+      if (els.dockInfo.textContent !== label) {
+        els.dockInfo.textContent = label;
+        els.dockInfo.dataset.kind = '';
+      }
+    }
   }
 
   function onFinished() {
@@ -914,9 +1002,42 @@
 
   /* ── events ──────────────────────────────────────────────── */
 
+  function onHeaderTap(e) {
+    if (e.target.closest('input, button, select, textarea, label, a')) return;
+
+    var rowHead = e.target.closest('.row-head');
+    if (rowHead) {
+      var art = rowHead.closest('article.row');
+      var pi = +art.dataset.pi;
+      var ri = +art.dataset.ri;
+      var pl = state.playlists[pi];
+      if (pl && pl.rows[ri]) {
+        pl.rows[ri].collapsed = !pl.rows[ri].collapsed;
+        saveSoon();
+        renderAll();
+      }
+      return;
+    }
+
+    var plHead = e.target.closest('.pl-head');
+    if (plHead) {
+      var sec = plHead.closest('section.pl');
+      var idx = +sec.dataset.pi;
+      var target = state.playlists[idx];
+      if (target) {
+        target.collapsed = !target.collapsed;
+        saveSoon();
+        renderAll();
+      }
+    }
+  }
+
   function onClick(e) {
     var btn = e.target.closest('[data-act]');
-    if (!btn) return;
+    if (!btn) {
+      onHeaderTap(e);
+      return;
+    }
 
     var act = btn.dataset.act;
     var pi = Number(btn.dataset.pi);
@@ -924,13 +1045,9 @@
     var pl = state.playlists[pi];
 
     switch (act) {
-      case 'pl-collapse':
-        pl.collapsed = !pl.collapsed;
-        saveSoon();
-        renderAll();
-        break;
       case 'pl-more':
         togglePanel(btn.closest('.pl').querySelector('.pl-more'));
+        btn.setAttribute('aria-expanded', btn.closest('.pl').querySelector('.pl-more').hidden ? 'false' : 'true');
         break;
       case 'pl-play':
         togglePlay(pi);
@@ -950,13 +1067,9 @@
       case 'row-add':
         addRow(pi);
         break;
-      case 'row-collapse':
-        pl.rows[ri].collapsed = !pl.rows[ri].collapsed;
-        saveSoon();
-        renderAll();
-        break;
       case 'row-more':
         togglePanel(btn.closest('.row').querySelector('.row-actions'));
+        btn.setAttribute('aria-expanded', btn.closest('.row').querySelector('.row-actions').hidden ? 'false' : 'true');
         break;
       case 'row-dup':
         duplicateRow(pi, ri);
@@ -982,6 +1095,7 @@
   function onVolume() {
     state.masterVol = clampNum(+els.vol.value, 0, 100);
     els.volOut.textContent = Math.round(state.masterVol) + '%';
+    els.volLabel.textContent = Math.round(state.masterVol) + '%';
     player.setVolume(state.masterVol / 100);
     saveSoon();
   }
@@ -992,18 +1106,58 @@
     saveSoon();
   }
 
+  function setMenuOpen(open) {
+    els.menu.hidden = !open;
+    els.menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  function setVolOpen(open) {
+    els.volPop.hidden = !open;
+    els.volBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
   function bind() {
     els.list.addEventListener('input', handleEdit);
     els.list.addEventListener('change', handleEdit);
     els.list.addEventListener('click', onClick);
 
     els.vol.addEventListener('input', onVolume);
-    els.playAll.addEventListener('click', onPlayAll);
+    els.dockPlay.addEventListener('click', onPlayAll);
+    els.prev.addEventListener('click', function () { stepPlaylist(-1); });
+    els.next.addEventListener('click', function () { stepPlaylist(1); });
     els.chainLoop.addEventListener('click', function () { toggleChain('loop'); });
     els.chainShuffle.addEventListener('click', function () { toggleChain('shuffle'); });
-    els.add.addEventListener('click', addPlaylist);
-    els.importBtn.addEventListener('click', function () { beginImport(state.playlists.length - 1); });
+
+    els.menuBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setVolOpen(false);
+      setMenuOpen(els.menu.hidden);
+    });
+    els.volBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setMenuOpen(false);
+      setVolOpen(els.volPop.hidden);
+    });
+    els.add.addEventListener('click', function () {
+      setMenuOpen(false);
+      addPlaylist();
+    });
+    els.importBtn.addEventListener('click', function () {
+      setMenuOpen(false);
+      beginImport(state.playlists.length - 1);
+    });
     els.file.addEventListener('change', onFiles);
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('#topMenu') && !e.target.closest('#btnMenu')) setMenuOpen(false);
+      if (!e.target.closest('#volPop') && !e.target.closest('#btnVol')) setVolOpen(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+        setVolOpen(false);
+      }
+    });
 
     player.onStatus = onStatus;
     player.onFinished = onFinished;
@@ -1025,12 +1179,21 @@
 
   function init() {
     els.list = $('playlists');
-    els.status = $('status');
+    els.dockInfo = $('dockInfo');
+    els.dockTime = $('dockTime');
+    els.dockFill = $('dockFill');
+    els.dockPlay = $('btnDockPlay');
+    els.prev = $('btnPrev');
+    els.next = $('btnNext');
     els.vol = $('vol');
     els.volOut = $('volOut');
-    els.playAll = $('btnPlayAll');
+    els.volLabel = $('volLabel');
+    els.volBtn = $('btnVol');
+    els.volPop = $('volPop');
     els.chainLoop = $('btnChainLoop');
     els.chainShuffle = $('btnChainShuffle');
+    els.menuBtn = $('btnMenu');
+    els.menu = $('topMenu');
     els.add = $('btnAdd');
     els.importBtn = $('btnImport');
     els.file = $('fileInput');

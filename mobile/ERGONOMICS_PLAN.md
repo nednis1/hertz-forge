@@ -1,6 +1,7 @@
 # Hertz Forge Mobile — Phone Ergonomics Plan
 
-**Status:** planning only — no implementation started
+**Status:** Phase 1 implemented — Phases 2–3 pending
+**Last verified:** Chrome mobile emulation at 320, 360, 393 and 412px
 **Scope:** `mobile/app/` (PWA) with small follow-ups in `mobile/android/`
 **Decisions locked:** bottom transport dock is **always visible**; portrait
 orientation stays; UI remains dependency-free vanilla HTML/CSS/JS with no build
@@ -397,7 +398,26 @@ minimum target sizes at the listed viewports.
 
 ---
 
-## 14. Definition of done
+## 14. Phase 1 implementation notes
+
+- Bottom dock shipped as specified and is always visible; it replaces the old
+  status bar and reserves `--dock-h` of content padding.
+- Sliders use a 44px hit area (the plan allowed 36px); thumbs are 24px.
+- New rows are created collapsed. Rows already saved by a user keep their
+  existing expanded/collapsed flag.
+- The top-bar overflow is a compact dropdown menu (New playlist, Load `.hfc`);
+  the full bottom-sheet treatment remains Phase 2.
+- Pause/resume was not included (open question 1) — the dock button is
+  play/stop.
+- Verified in Chrome device emulation: no horizontal overflow, no control under
+  44×44px, sticky playlist header aligns with the top bar, the dock never covers
+  the last row, and play/stop, queue advance, prev/next and the volume popover
+  work. APK rebuild was not run because the local `.android-sdk` currently has
+  no `platforms/android-34` or `build-tools/35.0.0`.
+
+---
+
+## 15. Definition of done
 
 - All Phase 1 acceptance criteria pass on the verification matrix.
 - Playback, chaining, import/export and offline behaviour are unchanged.

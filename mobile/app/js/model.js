@@ -50,7 +50,9 @@
   }
 
   function newRow(name) {
-    return normRow({ name: name || '' });
+    var row = normRow({ name: name || '' });
+    row.collapsed = true;   /* phone-first: start as a one-line summary */
+    return row;
   }
 
   function normRow(src) {

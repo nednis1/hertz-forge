@@ -27,6 +27,20 @@ does not for install/offline features — for phone testing either use
 Chrome → menu → **Add to Home screen / Install app**. It then opens full-screen
 without browser chrome, keeps its own icon, and works offline after the first load.
 
+## Using it one-handed
+
+- The **bottom dock** is always visible: previous/next playlist, play/stop, the
+  current playlist + row with elapsed time, a progress line, and a volume
+  popover.
+- Rows start **collapsed** as a one-line summary (mode, carrier/beat, duration).
+  Tap anywhere on a row header to open its parameters; tap again to fold it.
+- Playlist headers **stick** under the top bar while you scroll its rows.
+- `loop`, `shuffle` and the overflow menu (`⋯`) stay in the top bar; new
+  playlist and `.hfc` loading live in the overflow menu.
+- Every button, checkbox and input is sized for a thumb (44px minimum), and
+  inputs use 16px text so iOS does not zoom on focus.
+
+
 ## What carries over from the desktop app
 
 - Same DSP math (`playlist_forge/engine.py`): sine/triangle/saw/square oscillators,
@@ -39,8 +53,8 @@ without browser chrome, keeps its own icon, and works offline after the first lo
 - Same `.hfc` JSON format and filename generator, so configs move both ways.
 
 Deliberate differences: playlist chaining uses the top-bar **loop/shuffle** over
-playlists (the desktop app does the same), and export is rendered in one pass with
-loop disabled.
+playlists (the desktop app does the same), the phone UI keeps transport in a
+bottom dock, and export is rendered in one pass with loop disabled.
 
 ## Known limits
 
