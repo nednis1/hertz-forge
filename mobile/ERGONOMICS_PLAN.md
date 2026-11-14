@@ -1,6 +1,6 @@
 # Hertz Forge Mobile — Phone Ergonomics Plan
 
-**Status:** Phase 1 implemented — Phases 2–3 pending
+**Status:** Phases 1–2 implemented — Phase 3 pending
 **Last verified:** Chrome mobile emulation at 320, 360, 393 and 412px
 **Scope:** `mobile/app/` (PWA) with small follow-ups in `mobile/android/`
 **Decisions locked:** bottom transport dock is **always visible**; portrait
@@ -227,13 +227,13 @@ step; DSP, row model and `.hfc` format are out of scope.
   unavailable. Not required for Phase 2 acceptance.
 
 ### 5.6 Phase 2 acceptance
-- [ ] Adding/duplicating/deleting a row does not move the page, close a sheet or
+- [x] Adding/duplicating/deleting a row does not move the page, close a sheet or
       dismiss the keyboard.
-- [ ] Sheet opens/closes with correct focus and scroll-lock behaviour; Escape
+- [x] Sheet opens/closes with correct focus and scroll-lock behaviour; Escape
       works with a hardware keyboard.
-- [ ] Active row is visible during playback unless the user scrolled away.
-- [ ] Expanded/collapsed state is announced correctly to screen readers.
-- [ ] If pause ships: pause/resume keeps the exact playback position.
+- [x] Active row is visible during playback unless the user scrolled away.
+- [x] Expanded/collapsed state is announced correctly to screen readers.
+- [x] If pause ships: pause/resume keeps the exact playback position.
 
 ---
 
@@ -417,7 +417,46 @@ minimum target sizes at the listed viewports.
 
 ---
 
-## 15. Definition of done
+## 15. Phase 2 implementation notes
+
+- **Bottom sheets.** Playlist and row `⋯` buttons open a safe-area-aware sheet
+  with a drag handle, backdrop, focus trap, Escape/backdrop/Cancel dismissal,
+  body scroll lock and focus return to the opener. Destructive actions sit last
+  and confirm inside the same sheet (Delete / Keep it); the native `confirm()`
+  is gone. Actions run after the sheet closes so re-renders cannot fight it.
+- **State preservation.** `renderAll()` still rebuilds the list (smaller diff than
+  patching every branch) but captures `window.scrollY`, the focused control's
+  stable `data-pi`/`ri`/`scope`/`field`/`side` identity and its text selection,
+  then restores them. Adding a row additionally anchors on the add button so it
+  stays under the thumb; collapsed rows keep the page stationary.
+- **Follow-scroll.** When the active row changes, the row is brought into the
+  band below the top bar + sticky playlist header and above the dock. A manual
+  scroll pauses following for 6 seconds; the next track after that follows
+  again. Programmatic scrolls are excluded from the manual-scroll signal.
+- **Pause/resume.** `Player.pause()`/`resume()` use `AudioContext.suspend()` and
+  `resume()`, so the DSP clock — and therefore the exact position — is kept.
+  The dock primary button is play/pause, with a separate red Stop button shown
+  only while playing. Wake lock is released on pause and requested again on
+  resume. Pausing survives structural edits (the audio context stays suspended).
+- **Disclosures.** Row and playlist chevrons are real buttons with
+  `aria-expanded` and, when expanded, `aria-controls`. Tapping the whole header
+  still toggles as well.
+- **Haptics.** `navigator.vibrate()` gives light feedback on transport taps,
+  disclosures and sheet actions where the platform supports it.
+- **Reorder (5.5)** is intentionally not implemented; the ↑/↓ sheet actions
+  remain the touch fallback.
+- **Verified:** pause freezes elapsed time and resume continues (0:01 → 0:03
+  after a 1.4s pause); structural edits while paused keep the paused chrome;
+  follow-scroll reaches the next playlist and stays put after a manual scroll;
+  sheets trap Tab, close on Escape/backdrop/Cancel, restore focus and confirm
+  deletion; add/edit keeps focus and caret; 320px dock with Stop visible has no
+  overflow and every target is ≥44×44px. `node --check` passes for the changed
+  JS. The APK was not rebuilt because the local Android SDK still lacks
+  `platforms/android-34` and `build-tools/35.0.0`.
+
+---
+
+## 16. Definition of done
 
 - All Phase 1 acceptance criteria pass on the verification matrix.
 - Playback, chaining, import/export and offline behaviour are unchanged.

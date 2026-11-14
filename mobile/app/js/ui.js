@@ -14,7 +14,8 @@
     play: null,              /* { pi, mode } */
     queue: [],
     queuePos: 0,
-    active: { pi: -1, ri: -1 }
+    active: { pi: -1, ri: -1 },
+    paused: false
   };
 
   var els = {};
@@ -25,6 +26,9 @@
   var busyExport = false;
   var importTarget = -1;
   var statusHold = 0;   /* keep a transient message visible over playback text */
+  var ignoreScrollUntil = 0;   /* programmatic scrolls must not count as user scrolls */
+  var manualScrollAt = 0;
+  var FOLLOW_HOLD = 6000;      /* leave the page alone for this long after a manual scroll */
 
   /* ── helpers ─────────────────────────────────────────────── */
 
@@ -243,7 +247,12 @@
     var check = '<label class="check-wrap"><input type="checkbox" class="check" ' +
       ctlAttrs(pi, ri, 'row', 'include') + (row.included !== false ? ' checked' : '') +
       ' aria-label="Include row"></label>';
-    var caret = '<span class="caret" aria-hidden="true">' + (row.collapsed ? '▸' : '▾') + '</span>';
+    var bodyId = 'rb-' + pi + '-' + ri;
+    var caret = '<button class="caret-btn" type="button" data-act="row-toggle" ' + d +
+      ' aria-label="' + (row.collapsed ? 'Expand row' : 'Collapse row') + '"' +
+      ' aria-expanded="' + (row.collapsed ? 'false' : 'true') + '"' +
+      (row.collapsed ? '' : ' aria-controls="' + bodyId + '"') + '>' +
+      (row.collapsed ? '▸' : '▾') + '</button>';
     var more = '<button class="icon" type="button" data-act="row-more" ' + d +
       ' aria-label="Row actions" aria-haspopup="dialog">⋯</button>';
 
@@ -265,7 +274,7 @@
           fmtTime(active ? 0 : row.duration) + '</span>' +
         more +
       '</div>' +
-      '<div class="row-body">' + rowBodyHTML(pi, ri, row) + '</div>' +
+      '<div class="row-body" id="' + bodyId + '">' + rowBodyHTML(pi, ri, row) + '</div>' +
     '</article>';
   }
 
@@ -273,12 +282,18 @@
     var playing = !!(state.play && state.play.pi === pi);
     var total = M.playbackDuration(pl);
     var d = 'data-pi="' + pi + '"';
+    var rowsId = 'pl-rows-' + pi;
+    var caret = '<button class="caret-btn" type="button" data-act="pl-toggle" ' + d +
+      ' aria-label="' + (pl.collapsed ? 'Expand playlist' : 'Collapse playlist') + '"' +
+      ' aria-expanded="' + (pl.collapsed ? 'false' : 'true') + '"' +
+      (pl.collapsed ? '' : ' aria-controls="' + rowsId + '"') + '>' +
+      (pl.collapsed ? '▸' : '▾') + '</button>';
 
     return '<section class="pl' + (pl.collapsed ? ' collapsed' : '') + (playing ? ' playing' : '') + '" ' + d + '>' +
       '<div class="pl-head">' +
         '<label class="check-wrap"><input type="checkbox" class="check" ' + ctlAttrs(pi, 0, 'pl', 'include') +
           (pl.included !== false ? ' checked' : '') + ' aria-label="Include playlist"></label>' +
-        '<span class="caret" aria-hidden="true">' + (pl.collapsed ? '▸' : '▾') + '</span>' +
+        caret +
         '<div class="pl-title">' +
           '<input class="pl-name" type="text" value="' + esc(pl.name) + '" ' +
             ctlAttrs(pi, 0, 'pl', 'name') + ' aria-label="Playlist name">' +
@@ -299,7 +314,7 @@
           (pl.play_rows | 0) + '" ' + ctlAttrs(pi, 0, 'pl', 'playrows') + '></label>' +
       '</div>' +
       (pl.collapsed ? '' :
-        '<div class="rows">' + pl.rows.map(function (r, ri) {
+        '<div class="rows" id="' + rowsId + '">' + pl.rows.map(function (r, ri) {
           return rowHTML(pi, ri, r);
         }).join('') + '</div>' +
         '<button class="btn add" type="button" data-act="row-add" ' + d + '>＋ row</button>') +
@@ -323,12 +338,49 @@
     if (anchor && again) {
       /* Keep the control the user just tapped under their thumb. */
       var delta = again.getBoundingClientRect().top - anchorTop;
-      if (delta) window.scrollBy(0, delta);
+      scrollTo(window.scrollY + delta);
     } else {
-      window.scrollTo(0, scrollY);
+      scrollTo(scrollY);
     }
     restoreFocus(focus);
     syncChrome();
+  }
+
+  function scrollTo(y, smooth) {
+    ignoreScrollUntil = Date.now() + (smooth ? 700 : 200);
+    try {
+      window.scrollTo({ top: Math.max(0, y), behavior: smooth ? 'smooth' : 'auto' });
+    } catch (e) {
+      window.scrollTo(0, Math.max(0, y));
+    }
+  }
+
+  /* Bring the active row into the visible band below the sticky headers and
+     above the dock. Suppressed briefly after the user scrolls by hand. */
+  function followActive() {
+    if (!state.play || state.paused || sheetState.open) return;
+    if (Date.now() - manualScrollAt < FOLLOW_HOLD) return;
+
+    var pi = state.active.pi;
+    var ri = state.active.ri;
+    if (pi < 0 || ri < 0) return;
+
+    var rowEl = els.list.querySelector('article.row[data-pi="' + pi + '"][data-ri="' + ri + '"]');
+    if (!rowEl) return;
+
+    var head = rowEl.querySelector('.row-head') || rowEl;
+    var rect = head.getBoundingClientRect();
+    var topbar = document.querySelector('.topbar');
+    var plHead = document.querySelector('section.pl[data-pi="' + pi + '"] .pl-head');
+    /* After scrolling, the playlist header sticks under the top bar, so the
+       row must clear both. (Its current rect can be far down the page.) */
+    var top = (topbar ? topbar.getBoundingClientRect().height : 0) +
+      (plHead ? plHead.offsetHeight : 0) + 8;
+    var dock = els.dock ? els.dock.getBoundingClientRect() : null;
+    var bottom = window.innerHeight - (dock ? dock.height : 0) - 8;
+
+    if (rect.top >= top && rect.bottom <= bottom) return;
+    scrollTo(window.scrollY + rect.top - top, true);
   }
 
   /* Stable identity for a rendered control, independent of DOM order. */
@@ -384,9 +436,10 @@
 
   function syncChrome() {
     var playing = !!state.play;
-    els.dockPlay.textContent = playing ? '■' : '▶';
-    els.dockPlay.classList.toggle('stop', playing);
-    els.dockPlay.setAttribute('aria-label', playing ? 'Stop' : 'Play all');
+    var paused = playing && state.paused;
+    els.dockPlay.textContent = playing ? (paused ? '▶' : '❚❚') : '▶';
+    els.dockPlay.setAttribute('aria-label', playing ? (paused ? 'Resume' : 'Pause') : 'Play all');
+    els.stop.hidden = !playing;
     setToggle(els.chainLoop, state.chain.loop);
     setToggle(els.chainShuffle, state.chain.shuffle);
     els.vol.value = state.masterVol;
@@ -1122,7 +1175,12 @@
 
     pl.seed = (Math.random() * 1e9) | 0;
     state.play = { pi: pi, mode: mode };
+    state.paused = false;
     state.active = { pi: pi, ri: -1 };
+
+    /* Paint the new state before awaiting the worklet load so the first
+       playback status is not overwritten (and scrolled back) by a late render. */
+    renderAll();
 
     try {
       player.setVolume(state.masterVol / 100);
@@ -1135,13 +1193,13 @@
     }
 
     requestWakeLock();
-    renderAll();
     setStatus('Playing ' + pl.name);
   }
 
   function stopPlayback(silent) {
     player.stop();
     state.play = null;
+    state.paused = false;
     state.active = { pi: -1, ri: -1 };
     releaseWakeLock();
     renderAll();
@@ -1157,16 +1215,46 @@
   }
 
   function onPlayAll() {
-    if (state.play) {
-      stopPlayback(false);
-      return;
-    }
     buildQueue();
     if (!state.queue.length) {
       setStatus('No playlists to play.', 'warn');
       return;
     }
     startPlayback(state.queue[0], 'all');
+  }
+
+  async function togglePause() {
+    if (!state.play) return;
+    buzz(8);
+    var pl = state.playlists[state.play.pi];
+
+    if (!state.paused) {
+      var ok = await player.pause();
+      if (!ok) {
+        setStatus('Cannot pause audio here.', 'warn');
+        return;
+      }
+      state.paused = true;
+      releaseWakeLock();
+      syncChrome();
+      setStatus('Paused · ' + pl.name);
+      return;
+    }
+
+    var resumed = await player.resume();
+    if (!resumed) {
+      setStatus('Cannot resume audio here.', 'error');
+      return;
+    }
+    state.paused = false;
+    requestWakeLock();
+    syncChrome();
+    setStatus('Playing ' + pl.name);
+  }
+
+  function onDockPrimary() {
+    if (state.play) togglePause();
+    else onPlayAll();
   }
 
   function navOrder() {
@@ -1238,6 +1326,7 @@
           tl.textContent = fmtTime(isActive ? 0 : (pl && pl.rows[rri] ? pl.rows[rri].duration : 0));
         }
       }
+      followActive();
     }
 
     var curPl = state.playlists[pi];
@@ -1306,33 +1395,38 @@
 
   /* ── events ──────────────────────────────────────────────── */
 
+  function toggleRow(pi, ri) {
+    var pl = state.playlists[pi];
+    if (!pl || !pl.rows[ri]) return;
+    pl.rows[ri].collapsed = !pl.rows[ri].collapsed;
+    buzz(5);
+    saveSoon();
+    renderAll();
+  }
+
+  function togglePlaylist(pi) {
+    var pl = state.playlists[pi];
+    if (!pl) return;
+    pl.collapsed = !pl.collapsed;
+    buzz(5);
+    saveSoon();
+    renderAll();
+  }
+
   function onHeaderTap(e) {
     if (e.target.closest('input, button, select, textarea, label, a')) return;
 
     var rowHead = e.target.closest('.row-head');
     if (rowHead) {
       var art = rowHead.closest('article.row');
-      var pi = +art.dataset.pi;
-      var ri = +art.dataset.ri;
-      var pl = state.playlists[pi];
-      if (pl && pl.rows[ri]) {
-        pl.rows[ri].collapsed = !pl.rows[ri].collapsed;
-        saveSoon();
-        renderAll();
-      }
+      toggleRow(+art.dataset.pi, +art.dataset.ri);
       return;
     }
 
     var plHead = e.target.closest('.pl-head');
     if (plHead) {
       var sec = plHead.closest('section.pl');
-      var idx = +sec.dataset.pi;
-      var target = state.playlists[idx];
-      if (target) {
-        target.collapsed = !target.collapsed;
-        saveSoon();
-        renderAll();
-      }
+      togglePlaylist(+sec.dataset.pi);
     }
   }
 
@@ -1354,6 +1448,14 @@
     }
     if (act === 'row-more') {
       openSheet('row', pi, ri, btn);
+      return;
+    }
+    if (act === 'row-toggle') {
+      toggleRow(pi, ri);
+      return;
+    }
+    if (act === 'pl-toggle') {
+      togglePlaylist(pi);
       return;
     }
     if (act === 'row-add') {
@@ -1393,9 +1495,19 @@
     els.list.addEventListener('click', onClick);
 
     els.vol.addEventListener('input', onVolume);
-    els.dockPlay.addEventListener('click', onPlayAll);
-    els.prev.addEventListener('click', function () { stepPlaylist(-1); });
-    els.next.addEventListener('click', function () { stepPlaylist(1); });
+    els.dockPlay.addEventListener('click', onDockPrimary);
+    els.stop.addEventListener('click', function () {
+      buzz(8);
+      stopPlayback(false);
+    });
+    els.prev.addEventListener('click', function () {
+      buzz(6);
+      stepPlaylist(-1);
+    });
+    els.next.addEventListener('click', function () {
+      buzz(6);
+      stepPlaylist(1);
+    });
     els.chainLoop.addEventListener('click', function () { toggleChain('loop'); });
     els.chainShuffle.addEventListener('click', function () { toggleChain('shuffle'); });
 
@@ -1443,8 +1555,13 @@
     player.onStatus = onStatus;
     player.onFinished = onFinished;
 
+    window.addEventListener('scroll', function () {
+      if (Date.now() < ignoreScrollUntil) return;
+      manualScrollAt = Date.now();
+    }, { passive: true });
+
     document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'visible' && state.play) requestWakeLock();
+      if (document.visibilityState === 'visible' && state.play && !state.paused) requestWakeLock();
     });
 
     window.addEventListener('beforeunload', saveNow);
@@ -1460,10 +1577,12 @@
 
   function init() {
     els.list = $('playlists');
+    els.dock = $('dock');
     els.dockInfo = $('dockInfo');
     els.dockTime = $('dockTime');
     els.dockFill = $('dockFill');
     els.dockPlay = $('btnDockPlay');
+    els.stop = $('btnStop');
     els.prev = $('btnPrev');
     els.next = $('btnNext');
     els.vol = $('vol');

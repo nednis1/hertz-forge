@@ -86,6 +86,7 @@
     this.volume = 0.5;
     this.onStatus = null;
     this.onFinished = null;
+    this.paused = false;
     this._blocks = 0;
     this._done = true;
   }
@@ -170,6 +171,31 @@
 
     if (this.ctx.state !== 'running') await this.ctx.resume();
     this.playing = true;
+    this.paused = false;
+  };
+
+  /* Suspend the whole context: the DSP clock stops and the exact playhead
+     position is kept for resume(). */
+  Player.prototype.pause = async function () {
+    if (!this.playing || this.paused || !this.ctx) return false;
+    try {
+      await this.ctx.suspend();
+    } catch (e) {
+      return false;
+    }
+    this.paused = true;
+    return true;
+  };
+
+  Player.prototype.resume = async function () {
+    if (!this.playing || !this.paused || !this.ctx) return false;
+    try {
+      await this.ctx.resume();
+    } catch (e) {
+      return false;
+    }
+    this.paused = false;
+    return true;
   };
 
   /* Parameter / structure edit — keeps the playhead position. */
@@ -186,6 +212,7 @@
 
   Player.prototype.stop = function () {
     this.playing = false;
+    this.paused = false;
     this._done = true;
     this.rows = [];
     if (this.node && this.mode === 'worklet') {
