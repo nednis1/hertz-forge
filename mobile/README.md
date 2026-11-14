@@ -29,9 +29,10 @@ without browser chrome, keeps its own icon, and works offline after the first lo
 
 ## Using it one-handed
 
-- The **bottom dock** is always visible: previous/next playlist, play/pause, stop,
-  the current playlist + row with elapsed time, a progress line, and a volume
-  popover.
+- The **bottom dock** is always visible and holds every control: previous/next
+  playlist, play/pause, stop, **loop**, **shuffle**, the **⋯** menu, the current
+  playlist + row with elapsed time, a progress line, and a volume popover. The
+  top bar is just the title, so nothing important sits out of thumb reach.
 - **Pause** suspends the audio clock, so resuming continues from the exact
   position. **Stop** (the red ■ next to the transport) ends playback.
 - During playback the dock **follows the playing row** into view. If you scroll
@@ -41,8 +42,9 @@ without browser chrome, keeps its own icon, and works offline after the first lo
   Tap anywhere on a row header to open its parameters; tap again to fold it.
   The chevron is also a real button and announces expanded/collapsed state.
 - Playlist headers **stick** under the top bar while you scroll its rows.
-- `loop`, `shuffle` and the overflow menu (`⋯`) stay in the top bar; new
-  playlist and `.hfc` loading live in the overflow menu.
+- `loop`, `shuffle` and the **⋯** menu sit in the dock line above the transport;
+  the menu opens **upward** from the dock. New playlist and `.hfc` loading live
+  in it.
 - A playlist's or row's `⋯` opens a **bottom action sheet** (export, duplicate,
   move, save, load, delete). Delete asks for confirmation in the same sheet.
   Escape, the backdrop and **Cancel** close it.
@@ -53,7 +55,8 @@ without browser chrome, keeps its own icon, and works offline after the first lo
 - Icons are inline SVG from a sprite in `index.html`, so play/pause/stop,
   prev/next, volume, import, add, more, the chevrons and the sheet actions look
   the same on Android, iOS and desktop instead of falling back to platform
-  emoji. `loop` and `shuffle` stay as labelled text toggles.
+  emoji. `loop` and `shuffle` use their own icons, with `aria-pressed` carrying
+  the on/off state.
 - **Every value can be typed.** Each slider carries an editable box beside its
   label: tap the number, enter an exact figure (`7.83` Hz, `432` Hz, `30`%) and
   the slider follows. Dragging the slider updates the box, so neither control is
@@ -76,7 +79,7 @@ without browser chrome, keeps its own icon, and works offline after the first lo
   "rows" playback limit.
 - Same `.hfc` JSON format and filename generator, so configs move both ways.
 
-Deliberate differences: playlist chaining uses the top-bar **loop/shuffle** over
+Deliberate differences: playlist chaining uses the dock **loop/shuffle** over
 playlists (the desktop app does the same), the phone UI keeps transport in a
 bottom dock, and export is rendered in one pass with loop disabled.
 

@@ -33,25 +33,14 @@
     <symbol id="i-up" viewBox="0 0 24 24"><path d="M11 8.2 6.7 12.5 5.3 11.1 12 4.4l6.7 6.7-1.4 1.4L13 8.2V20h-2z"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><path d="M13 15.8l4.3-4.3 1.4 1.4L12 19.6l-6.7-6.7 1.4-1.4L11 15.8V4h2z"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><path d="M8 3.5h9.5A1.5 1.5 0 0 1 19 5v9.5h-2V5.5H8zM5.5 8H15a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 15 20H5.5A1.5 1.5 0 0 1 4 18.5v-9A1.5 1.5 0 0 1 5.5 8z"/></symbol>
+    <symbol id="i-loop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 9.4A6 6 0 0 1 10.4 5.2h6.1"/><path d="M15.2 3.2 18.6 5.9l-3.4 2.7"/><path d="M19.4 14.6a6 6 0 0 1-5.8 4.2H7.5"/><path d="M8.8 21.4 5.4 18.7l3.4-2.7"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 7.2h3.1c1.5 0 2.6.7 3.4 2l4.6 6.4c.8 1.2 1.9 1.9 3.4 1.9h2.9"/><path d="M3.4 17.5h3.1c1.5 0 2.6-.7 3.4-1.9l1-1.4"/><path d="M13.3 10.3l1.2-1.7c.8-1.2 1.9-1.9 3.4-1.9h2.9"/><path d="M18 4.1l2.9 2.6-2.9 2.6"/><path d="M18 15l2.9 2.5-2.9 2.6"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M9.2 3.6h5.6l.7 1.4H20v1.8H4V5h4.5zM6.3 8h11.4l-.8 11.4a1.6 1.6 0 0 1-1.6 1.5H8.7a1.6 1.6 0 0 1-1.6-1.5zm3.5 2.2v8h1.7v-8zm3.3 0v8H14v-8z"/></symbol>
   </defs>
 </svg>
 
 <header class="topbar">
   <div class="brand">Hertz Forge <small>playlist</small></div>
-  <div class="topbar-actions">
-    <button id="btnChainLoop" class="btn toggle" aria-pressed="false" aria-label="Loop playlists">
-      <span class="full">loop</span><span class="mini" aria-hidden="true">↻</span>
-    </button>
-    <button id="btnChainShuffle" class="btn toggle" aria-pressed="false" aria-label="Shuffle playlists">
-      <span class="full">shuffle</span><span class="mini" aria-hidden="true">⇄</span>
-    </button>
-    <button id="btnMenu" class="btn icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="More actions"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-more"></use></svg></button>
-  </div>
-  <div id="topMenu" class="menu" hidden>
-    <button id="btnAdd" class="menu-item" type="button"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-add"></use></svg>New playlist</button>
-    <button id="btnImport" class="menu-item" type="button"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-import"></use></svg>Load .hfc</button>
-  </div>
 </header>
 
 <p class="hint">Headphones needed — each ear gets a different signal.</p>
@@ -63,6 +52,15 @@
   <div class="dock-line">
     <span id="dockInfo" class="dock-info" role="status" aria-live="polite">Ready</span>
     <span id="dockTime" class="dock-time"></span>
+    <div class="dock-tools">
+      <button id="btnChainLoop" class="dock-btn toggle" type="button" aria-pressed="false" aria-label="Loop playlists"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-loop"></use></svg></button>
+      <button id="btnChainShuffle" class="dock-btn toggle" type="button" aria-pressed="false" aria-label="Shuffle playlists"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-shuffle"></use></svg></button>
+      <button id="btnMenu" class="dock-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="More actions"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-more"></use></svg></button>
+    </div>
+  </div>
+  <div id="topMenu" class="menu" hidden>
+    <button id="btnAdd" class="menu-item" type="button"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-add"></use></svg>New playlist</button>
+    <button id="btnImport" class="menu-item" type="button"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-import"></use></svg>Load .hfc</button>
   </div>
   <div class="dock-actions">
     <button id="btnPrev" class="dock-btn" type="button" aria-label="Previous playlist" disabled><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-prev"></use></svg></button>

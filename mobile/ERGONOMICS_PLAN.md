@@ -495,6 +495,13 @@ minimum target sizes at the listed viewports.
   no worklet. It is now precached), README updated, APK
   rebuilt with build-tools 35 (34's bundled R8 crashes on JDK 21 class files)
   and verified with `apksigner`.
+- **Dock consolidation (follow-up).** `loop`, `shuffle` and the `⋯` menu moved
+  out of the top bar into the dock's status line, next to the elapsed time; the
+  top bar is now just the brand. They keep ids and handlers, got `i-loop` and
+  `i-shuffle` sprite icons (so they fit three-across at 320px), and the menu is
+  bottom-anchored so it opens upward. `--dock-h` went 80 → 112px to keep the
+  last row clear of the taller dock. At 303-320px the status text elides to make
+  room for the three toggles; from 360px up it fits fully.
 - **Typed values (follow-up).** Every slider readout is now an editable number
   input instead of a static `<output>`, so exact values can be entered rather
   than dragged. `rangeField` renders the twin with the same `data-scope`,

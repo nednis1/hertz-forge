@@ -20,7 +20,7 @@
   --radius: 12px;
   --tap: 44px;
   --topbar-h: 56px;
-  --dock-h: 80px;
+  --dock-h: 112px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -101,9 +101,9 @@ button, .check-wrap, .seg-btn, .dock-btn, .icon { touch-action: manipulation; }
 }
 .btn.add .ico { width: 18px; height: 18px; }
 
-/* ── top-bar overflow menu ── */
+/* ── dock overflow menu (opens upward from the dock) ── */
 .menu {
-  position: absolute; top: calc(100% - 2px); right: calc(var(--safe-right) + 8px);
+  position: absolute; bottom: calc(100% + 8px); right: calc(var(--safe-right) + 10px);
   z-index: 40; min-width: 190px; padding: 6px;
   background: var(--surface2); border: 1px solid var(--line);
   border-radius: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
@@ -307,8 +307,14 @@ select {
   background: var(--accent); transition: width 0.25s linear;
 }
 .dock-line {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  height: 16px; margin-bottom: 4px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-height: var(--tap); margin-bottom: 4px;
+}
+.dock-tools { display: flex; gap: 6px; flex: 0 0 auto; }
+.dock-btn.toggle { color: var(--muted); }
+.dock-btn.toggle.on {
+  color: var(--accent); border-color: var(--accent2);
+  background: rgba(92, 240, 200, 0.10);
 }
 .dock-info {
   min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
