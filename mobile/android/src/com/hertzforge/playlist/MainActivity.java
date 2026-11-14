@@ -3,6 +3,7 @@ package com.hertzforge.playlist;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.res.AssetManager;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -49,11 +50,18 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        /* Dark system chrome, so a cold start never flashes white behind the app. */
+        getWindow().setBackgroundDrawable(new ColorDrawable(0xFF0C0C18));
+        getWindow().setStatusBarColor(0xFF0C0C18);
+        getWindow().setNavigationBarColor(0xFF0C0C18);
+
         web = new WebView(this);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
+        /* The CSS already sizes text for phones; system scaling would break it. */
+        s.setTextZoom(100);
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         web.setBackgroundColor(0xFF0C0C18);
